@@ -1237,10 +1237,10 @@ export default function App() {
                 setEditingTask(task);
                 setIsTaskFormOpen(true);
               }}
-              onToggleComplete={toggleComplete}
-              onDeleteTask={deleteTask}
-              accentBg={accentBg}
-              accentBgHover={accentBgHover}
+              onToggleComplete={handleToggleComplete}
+              onDeleteTask={handleDeleteTask}
+              accentBg={t.accentBg}
+              accentBgHover={t.accentBgHover}
             />
           )}
 
@@ -1263,10 +1263,10 @@ export default function App() {
                 setEditingTask(task);
                 setIsTaskFormOpen(true);
               }}
-              onToggleComplete={toggleComplete}
-              onDeleteTask={deleteTask}
-              accentBg={accentBg}
-              accentBgHover={accentBgHover}
+              onToggleComplete={handleToggleComplete}
+              onDeleteTask={handleDeleteTask}
+              accentBg={t.accentBg}
+              accentBgHover={t.accentBgHover}
             />
           )}
 
@@ -1289,10 +1289,10 @@ export default function App() {
                 setEditingTask(task);
                 setIsTaskFormOpen(true);
               }}
-              onToggleComplete={toggleComplete}
-              onDeleteTask={deleteTask}
-              accentBg={accentBg}
-              accentBgHover={accentBgHover}
+              onToggleComplete={handleToggleComplete}
+              onDeleteTask={handleDeleteTask}
+              accentBg={t.accentBg}
+              accentBgHover={t.accentBgHover}
             />
           )}
         </div>
