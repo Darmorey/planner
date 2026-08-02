@@ -10,14 +10,13 @@ import '@fontsource-variable/playfair-display/wght.css';
 import '@fontsource-variable/playfair-display/wght-italic.css';
 import '@fontsource/jetbrains-mono/400.css';
 import '@fontsource/jetbrains-mono/500.css';
-import {registerSW} from 'virtual:pwa-register';
 import App from './App.tsx';
+import UpdateBanner from './components/UpdateBanner.tsx';
 import './index.css';
-
-registerSW({immediate: true});
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <App />
+    <UpdateBanner />
   </StrictMode>,
 );
