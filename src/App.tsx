@@ -883,12 +883,13 @@ export default function App() {
         <div className="flex-1 overflow-y-auto px-6 py-6 bg-slate-50/40">
           
           {showFullCalendar && (
-            <div className="mb-6 animate-fade-in">
+            <div className="mb-6 -mx-6 animate-fade-in">
               <MonthCalendar
                 selectedDate={selectedDate}
                 onSelectDate={handleSelectDate}
                 tasks={tasks}
                 theme={t}
+                fullWidth
               />
             </div>
           )}
