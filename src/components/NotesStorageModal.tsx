@@ -136,7 +136,8 @@ export default function NotesStorageModal({
 
   if (!isOpen) return null;
 
-  const formatNoteDate = (dateStr: string): string => {
+  const formatNoteDate = (dateStr?: string): string => {
+    if (!dateStr) return 'Каждый день';
     try {
       const d = parseLocalDate(dateStr);
       const months = [

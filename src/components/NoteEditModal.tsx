@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Save, Trash2 } from 'lucide-react';
+import { X, Save, Trash2, CalendarDays } from 'lucide-react';
 import { DayNote } from '../types';
 import { ThemeId } from '../utils/themeTypes';
 
@@ -9,7 +9,7 @@ interface NoteEditModalProps {
   note: DayNote | null; // Null means we're adding a new note
   selectedDate: string;
   theme: ThemeId;
-  onSave: (noteData: { id?: string; title: string; content: string; date: string }) => void;
+  onSave: (noteData: { id?: string; title: string; content: string; date?: string }) => void;
   onDelete?: (id: string) => void;
 }
 
@@ -144,6 +144,7 @@ export default function NoteEditModal({
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [date, setDate] = useState('');
+  const [pinnedToDay, setPinnedToDay] = useState(true);
   const dateInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -151,10 +152,13 @@ export default function NoteEditModal({
       if (note) {
         setTitle(note.title || '');
         setContent(note.content || '');
+        const hasDate = !!note.date;
+        setPinnedToDay(hasDate);
         setDate(note.date || selectedDate);
       } else {
         setTitle('');
         setContent('');
+        setPinnedToDay(true);
         setDate(selectedDate);
       }
     }
@@ -172,9 +176,24 @@ export default function NoteEditModal({
       id: note?.id,
       title: title.trim(),
       content: content.trim(),
-      date: date
+      date: pinnedToDay ? date : undefined
     });
     onClose();
+  };
+
+  const openDatePicker = () => {
+    if (!pinnedToDay) {
+      setPinnedToDay(true);
+      if (!date) setDate(selectedDate);
+    }
+    // Defer so the input is enabled/visible after pin toggle
+    requestAnimationFrame(() => {
+      try {
+        dateInputRef.current?.showPicker?.();
+      } catch {
+        dateInputRef.current?.click?.();
+      }
+    });
   };
 
   const getRussianDateParts = (dateStr: string) => {
@@ -249,35 +268,53 @@ export default function NoteEditModal({
           </div>
 
           {/* Bottom Action row */}
-          <div className={`flex items-center gap-4 pt-4 border-t ${styles.divider} w-full shrink-0`}>
-            {/* Tear-off calendar date selection button */}
-            <div className="relative shrink-0">
+          <div className={`flex items-center gap-3 pt-4 border-t ${styles.divider} w-full shrink-0`}>
+            {/* Date: pin to day or show every day */}
+            <div className="relative shrink-0 flex items-center gap-1.5">
               <button
                 type="button"
-                onClick={() => {
-                  try {
-                    dateInputRef.current?.showPicker?.();
-                  } catch (err) {
-                    dateInputRef.current?.click?.();
-                  }
-                }}
-                className={`flex flex-col items-center justify-center w-12 h-12 rounded-xl ${styles.calBtnBg} border ${styles.border} shadow-sm select-none active:scale-95 transition-all duration-150`}
-                title="Выбрать дату"
+                onClick={openDatePicker}
+                className={`flex flex-col items-center justify-center w-12 h-12 rounded-xl ${styles.calBtnBg} border ${styles.border} shadow-sm select-none active:scale-95 transition-all duration-150 ${
+                  !pinnedToDay ? 'opacity-55' : ''
+                }`}
+                title={pinnedToDay ? 'Выбрать дату' : 'Привязать к дню'}
               >
-                <span className={`text-[9px] font-extrabold ${styles.calMonthColor} uppercase tracking-wider leading-none`}>
-                  {dateParts.month}
-                </span>
-                <span className={`text-[17px] font-bold ${styles.calDateColor} tracking-tight leading-none mt-0.5`}>
-                  {dateParts.day}
-                </span>
+                {pinnedToDay ? (
+                  <>
+                    <span className={`text-[9px] font-extrabold ${styles.calMonthColor} uppercase tracking-wider leading-none`}>
+                      {dateParts.month}
+                    </span>
+                    <span className={`text-[17px] font-bold ${styles.calDateColor} tracking-tight leading-none mt-0.5`}>
+                      {dateParts.day}
+                    </span>
+                  </>
+                ) : (
+                  <CalendarDays size={18} className={styles.calDateColor} />
+                )}
               </button>
               <input
                 ref={dateInputRef}
                 type="date"
-                value={date}
-                onChange={e => setDate(e.target.value)}
-                className="absolute inset-0 opacity-0 cursor-pointer w-full h-[48px]"
+                value={date || selectedDate}
+                onChange={e => {
+                  setDate(e.target.value);
+                  setPinnedToDay(true);
+                }}
+                className="sr-only"
+                tabIndex={-1}
               />
+              <button
+                type="button"
+                onClick={() => setPinnedToDay(prev => !prev)}
+                className={`h-12 px-2.5 rounded-xl text-[10px] font-bold tracking-wide border shadow-sm active:scale-95 transition-all ${
+                  pinnedToDay
+                    ? `${styles.calBtnBg} ${styles.subtextColor} ${styles.border}`
+                    : `${styles.saveBtnBg} ${styles.saveBtnText} ${styles.border}`
+                }`}
+                title={pinnedToDay ? 'Показывать каждый день' : 'Заметка без даты — каждый день'}
+              >
+                {pinnedToDay ? 'День' : 'Все дни'}
+              </button>
             </div>
 
             {/* Save Button */}

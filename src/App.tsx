@@ -615,7 +615,8 @@ export default function App() {
   };
 
   // --- REAL-TIME NOTES ACTIONS ---
-  const handleSaveNote = (noteData: { id?: string; title: string; content: string; date: string }) => {
+  const handleSaveNote = (noteData: { id?: string; title: string; content: string; date?: string }) => {
+    const normalizedDate = noteData.date?.trim() || undefined;
     setNotes(prev => {
       if (noteData.id) {
         // Edit existing
@@ -623,7 +624,7 @@ export default function App() {
           ...n, 
           title: noteData.title, 
           content: noteData.content, 
-          date: noteData.date 
+          date: normalizedDate 
         } : n);
       } else {
         // Create new
@@ -631,7 +632,7 @@ export default function App() {
           id: `note-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
           title: noteData.title,
           content: noteData.content,
-          date: noteData.date,
+          date: normalizedDate,
           createdAt: Date.now()
         };
         return [...prev, newNote];

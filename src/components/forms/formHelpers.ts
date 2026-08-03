@@ -105,3 +105,11 @@ export const handleImageUpload = (
   };
   reader.readAsDataURL(file);
 };
+
+/** Normalize a user-entered URL; returns empty string if blank. */
+export const normalizeExternalUrl = (raw: string): string => {
+  const trimmed = raw.trim();
+  if (!trimmed) return '';
+  if (/^https?:\/\//i.test(trimmed)) return trimmed;
+  return `https://${trimmed}`;
+};

@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { Plus, Gift, ChevronDown, CheckCircle2, Circle, Edit2, Trash2, Sparkles } from 'lucide-react';
+import { Plus, Gift, ChevronDown, CheckCircle2, Circle, Edit2, Trash2, Sparkles, ExternalLink } from 'lucide-react';
 import { Task } from '../types';
 import { getDotBgClass, getTextThemeClass, getTaskBgClass } from '../utils/themeHelpers';
 import CategoryQuickAdd from './CategoryQuickAdd';
+import { normalizeExternalUrl } from './forms/formHelpers';
 
 interface WishlistTabProps {
   wishlistTasks: Task[];
@@ -150,10 +151,37 @@ const WishlistTab: React.FC<WishlistTabProps> = ({
                                 {task.notes}
                               </p>
                             )}
+                            {task.link && (
+                              <a
+                                href={normalizeExternalUrl(task.link)}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                onClick={(e) => e.stopPropagation()}
+                                className="mt-1 inline-flex items-center gap-1 text-[11px] font-semibold text-sky-600 hover:text-sky-700 hover:underline max-w-full"
+                              >
+                                <ExternalLink size={11} className="shrink-0" />
+                                <span className="truncate">
+                                  {task.link.replace(/^https?:\/\//i, '')}
+                                </span>
+                              </a>
+                            )}
                           </div>
                         </div>
 
                         <div className="flex gap-1.5 shrink-0 ml-3">
+                          {task.link && (
+                            <a
+                              href={normalizeExternalUrl(task.link)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              onClick={(e) => e.stopPropagation()}
+                              className="p-1.5 hover:bg-sky-50 text-sky-500 hover:text-sky-700 rounded-lg transition-colors"
+                              title="Открыть ссылку"
+                              aria-label="Открыть ссылку"
+                            >
+                              <ExternalLink size={13} />
+                            </a>
+                          )}
                           <button
                             onClick={() => onEditTask(task)}
                             className="p-1.5 hover:bg-rose-50 text-slate-400 hover:text-rose-600 rounded-lg transition-colors"

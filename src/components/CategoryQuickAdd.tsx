@@ -16,7 +16,19 @@ export default function CategoryQuickAdd({
   const doneRef = useRef(false);
 
   useEffect(() => {
-    inputRef.current?.focus();
+    const el = inputRef.current;
+    if (!el) return;
+
+    el.focus();
+
+    const scrollToCenter = () => {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
+    };
+
+    requestAnimationFrame(scrollToCenter);
+    // Re-center after the mobile keyboard opens
+    const t = window.setTimeout(scrollToCenter, 320);
+    return () => window.clearTimeout(t);
   }, []);
 
   const finish = (mode: 'submit' | 'cancel') => {

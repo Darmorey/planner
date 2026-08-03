@@ -93,8 +93,14 @@ export default function NotesSection({
   const styles = themeStylesMap[theme] || themeStylesMap.standard;
 
   const dayNotes = notes
-    .filter(n => n.date === selectedDate)
-    .sort((a, b) => b.createdAt - a.createdAt);
+    .filter(n => !n.date || n.date === selectedDate)
+    .sort((a, b) => {
+      // Day-specific notes first, then everyday notes
+      const aPinned = a.date ? 1 : 0;
+      const bPinned = b.date ? 1 : 0;
+      if (aPinned !== bPinned) return bPinned - aPinned;
+      return b.createdAt - a.createdAt;
+    });
 
   return (
     <div className={`${styles.outerBg} rounded-2xl p-4 border ${styles.borderColor}`}>
@@ -137,6 +143,11 @@ export default function NotesSection({
                 <Check size={12} className={`${styles.subtextColor} mt-0.5 shrink-0 opacity-50`} />
                 <span className={`text-xs font-bold ${styles.textColor} line-clamp-1`}>{note.title || 'Без названия'}</span>
               </div>
+              {!note.date && (
+                <p className={`text-[9px] font-bold uppercase tracking-wider ${styles.subtextColor} mb-1 opacity-70`}>
+                  Каждый день
+                </p>
+              )}
               <p className={`text-[11px] ${styles.subtextColor} line-clamp-3 leading-relaxed`}>{note.content}</p>
             </button>
           ))}

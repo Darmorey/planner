@@ -24,6 +24,7 @@ export interface Task {
   giftRecipient?: string; // Custom recipient/person for gifts (e.g., Папа, Мама, Лёша, Бабушка)
   somedayCategory?: string; // Custom category for someday tasks (e.g., Идеи, Планы, Покупки, Разное)
   notes?: string;
+  link?: string; // Optional URL (primarily for wishlist items)
   recurrence: TaskRecurrence;
   color?: string; // Added color field for selecting custom task/event color
   image?: string; // Base64 encoded compressed image uri (primarily for wishes/gifts)
@@ -33,7 +34,8 @@ export interface Task {
 
 export interface DayNote {
   id: string;
-  date: string; // YYYY-MM-DD
+  /** YYYY-MM-DD; omit/empty = show every day */
+  date?: string;
   title: string;
   content: string;
   createdAt: number;

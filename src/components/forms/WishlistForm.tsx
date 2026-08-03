@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Trash2, Plus, ChevronDown, ChevronUp, Check, Edit2 } from 'lucide-react';
+import { Trash2, Plus, ChevronDown, ChevronUp, Check, Edit2, Link as LinkIcon } from 'lucide-react';
 import { Task } from '../../types';
 import FormShell from './FormShell';
 import NotesAndPhotoFields from './NotesAndPhotoFields';
@@ -8,6 +8,7 @@ import {
   NamedColorItem,
   getStyleByColor,
   handleImageUpload,
+  normalizeExternalUrl,
 } from './formHelpers';
 import { ThemeId, getDefaultTaskColor } from '../../utils/themeTypes';
 
@@ -32,6 +33,7 @@ export default function WishlistForm({
 }: WishlistFormProps) {
   const themeDefaultColor = getDefaultTaskColor(theme);
   const [title, setTitle] = useState('');
+  const [link, setLink] = useState('');
   const [notes, setNotes] = useState('');
   const [image, setImage] = useState<string | undefined>(undefined);
 
@@ -112,11 +114,13 @@ export default function WishlistForm({
   useEffect(() => {
     if (initialTask) {
       setTitle(initialTask.title);
+      setLink(initialTask.link || '');
       setNotes(initialTask.notes || '');
       setImage(initialTask.image || undefined);
       setSelectedWishlistCategory(initialTask.wishlistCategory || 'Одежда');
     } else {
       setTitle('');
+      setLink('');
       setNotes('');
       setImage(undefined);
       setSelectedWishlistCategory(defaultWishlistCategory || 'Одежда');
@@ -145,6 +149,7 @@ export default function WishlistForm({
       endDate: undefined,
       endTime: undefined,
       notes: notes.trim() || undefined,
+      link: normalizeExternalUrl(link) || undefined,
       recurrence: { pattern: 'none' },
       isWishlist: true,
       isGift: false,
@@ -274,7 +279,7 @@ export default function WishlistForm({
                                   {isSelected && <Check size={14} className="text-slate-500 ml-1.5 shrink-0" />}
                                 </div>
                                 
-                                <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+                                <div className="flex items-center gap-1 shrink-0 ml-2">
                                   <button
                                     type="button"
                                     onClick={(e) => {
@@ -282,21 +287,21 @@ export default function WishlistForm({
                                       setEditingWishlistCat(cat.name);
                                       setEditWishlistCatValue(cat.name);
                                     }}
-                                    className="p-1 hover:bg-slate-100 text-slate-400 hover:text-slate-700 rounded-lg transition-colors cursor-pointer"
+                                    className="p-1.5 hover:bg-slate-100 text-slate-400 hover:text-slate-700 rounded-lg transition-colors cursor-pointer"
                                     title="Редактировать категорию"
                                     aria-label="Редактировать категорию"
                                   >
-                                    <Edit2 size={12} />
+                                    <Edit2 size={14} />
                                   </button>
 
                                   <button
                                     type="button"
                                     onClick={(e) => handleDeleteWishlistCategory(cat.name, e)}
-                                    className="p-1 hover:bg-rose-50 text-slate-400 hover:text-rose-500 rounded-lg transition-colors cursor-pointer"
+                                    className="p-1.5 bg-rose-50 hover:bg-rose-100 text-rose-500 hover:text-rose-600 rounded-lg transition-colors cursor-pointer"
                                     title="Удалить категорию"
                                     aria-label="Удалить категорию"
                                   >
-                                    <Trash2 size={12} />
+                                    <Trash2 size={14} strokeWidth={2.25} />
                                   </button>
                                 </div>
                               </div>
@@ -397,6 +402,23 @@ export default function WishlistForm({
               </div>
             )}
           </div>
+        </div>
+      </div>
+
+      <div className="border-t border-sky-50 pt-4">
+        <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
+          Ссылка
+        </label>
+        <div className="flex items-center gap-2 rounded-xl border border-sky-100 bg-sky-50/20 px-3 py-2 focus-within:bg-white focus-within:ring-2 focus-within:ring-sky-500/20 focus-within:border-sky-500 transition-all">
+          <LinkIcon size={15} className="text-slate-400 shrink-0" />
+          <input
+            type="url"
+            inputMode="url"
+            placeholder="https://…"
+            value={link}
+            onChange={e => setLink(e.target.value)}
+            className="w-full bg-transparent focus:outline-none text-slate-700 text-sm font-medium p-0 border-none"
+          />
         </div>
       </div>
 

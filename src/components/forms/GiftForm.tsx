@@ -275,7 +275,7 @@ export default function GiftForm({
                                   {isSelected && <Check size={14} className="text-slate-500 ml-1.5 shrink-0" />}
                                 </div>
                                 
-                                <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+                                <div className="flex items-center gap-1 shrink-0 ml-2">
                                   <button
                                     type="button"
                                     onClick={(e) => {
@@ -283,21 +283,21 @@ export default function GiftForm({
                                       setEditingGiftRecipient(rec.name);
                                       setEditGiftRecipientValue(rec.name);
                                     }}
-                                    className="p-1 hover:bg-slate-100 text-slate-400 hover:text-slate-700 rounded-lg transition-colors cursor-pointer"
+                                    className="p-1.5 hover:bg-slate-100 text-slate-400 hover:text-slate-700 rounded-lg transition-colors cursor-pointer"
                                     title="Редактировать получателя"
                                     aria-label="Редактировать получателя"
                                   >
-                                    <Edit2 size={12} />
+                                    <Edit2 size={14} />
                                   </button>
 
                                   <button
                                     type="button"
                                     onClick={(e) => handleDeleteGiftRecipient(rec.name, e)}
-                                    className="p-1 hover:bg-rose-50 text-slate-400 hover:text-rose-500 rounded-lg transition-colors cursor-pointer"
+                                    className="p-1.5 bg-rose-50 hover:bg-rose-100 text-rose-500 hover:text-rose-600 rounded-lg transition-colors cursor-pointer"
                                     title="Удалить получателя"
                                     aria-label="Удалить получателя"
                                   >
-                                    <Trash2 size={12} />
+                                    <Trash2 size={14} strokeWidth={2.25} />
                                   </button>
                                 </div>
                               </div>
