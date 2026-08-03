@@ -1,20 +1,22 @@
 import React from 'react';
 import { X, Palette, Trash2 } from 'lucide-react';
+import { ThemeId } from '../utils/themeTypes';
 
 interface SettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
   onClearAllData: () => void;
   isConfirmingClear: boolean;
-  theme: 'standard' | 'autumn' | 'gray' | 'bright';
-  onThemeChange: (newTheme: 'standard' | 'autumn' | 'gray' | 'bright') => void;
+  theme: ThemeId;
+  onThemeChange: (newTheme: ThemeId) => void;
 }
 
 const themesList = [
-  { id: 'standard', name: 'Стандартная', preview: 'bg-[#0C3B2E]', accent: 'bg-[#6D9773]' },
-  { id: 'autumn', name: 'Теплая осень', preview: 'bg-[#6B2D14]', accent: 'bg-[#BC5225]' },
-  { id: 'gray', name: 'Мин. серый', preview: 'bg-[#27272A]', accent: 'bg-[#52525B]' },
-  { id: 'bright', name: 'Яркий акцент', preview: 'bg-[#2F217A]', accent: 'bg-[#6D28D9]' },
+  { id: 'standard', name: 'Лес', preview: 'bg-[#0C3B2E]', accent: 'bg-[#6D9773]' },
+  { id: 'forestDark', name: 'Ночной лес', preview: 'bg-[#042018]', accent: 'bg-[#C9A227]' },
+  { id: 'autumn', name: 'Песок', preview: 'bg-[#5C4033]', accent: 'bg-[#A67C5D]' },
+  { id: 'gray', name: 'Камень', preview: 'bg-[#3F3F46]', accent: 'bg-[#71717A]' },
+  { id: 'bright', name: 'Лаванда', preview: 'bg-[#3D3A5C]', accent: 'bg-[#7B74A8]' },
 ] as const;
 
 export default function SettingsModal({
@@ -45,7 +47,6 @@ export default function SettingsModal({
           </div>
         </div>
 
-        {/* Theme Settings Section */}
         <div className="mb-5 pb-5 border-b border-rose-50/40">
           <div className="flex items-center gap-2 mb-3">
             <Palette className="text-slate-500" size={17} />
@@ -74,7 +75,6 @@ export default function SettingsModal({
           </div>
         </div>
 
-        {/* Configuration for clearing all local data */}
         <div className="bg-rose-50/15 p-3.5 rounded-2xl border border-rose-100/40">
           <h4 className="text-xs font-bold text-[#7D3F37] uppercase tracking-wider mb-1 flex items-center gap-1">
             <Trash2 size={13} className="text-rose-500" />

@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Plus, Gift, ChevronDown, CheckCircle2, Circle, Edit2, Trash2 } from 'lucide-react';
 import { Task } from '../types';
 import { getDotBgClass, getTextThemeClass, getTaskBgClass } from '../utils/themeHelpers';
+import CategoryQuickAdd from './CategoryQuickAdd';
 
 interface GiftsTabProps {
   giftsTasks: Task[];
@@ -11,6 +12,7 @@ interface GiftsTabProps {
   collapsedGifts: Record<string, boolean>;
   onToggleCollapse: (recipientName: string) => void;
   onAddTask: () => void;
+  onQuickAdd: (recipientName: string, title: string) => void;
   onEditTask: (task: Task) => void;
   onToggleComplete: (taskId: string) => void;
   onDeleteTask: (taskId: string) => void;
@@ -26,12 +28,23 @@ const GiftsTab: React.FC<GiftsTabProps> = ({
   collapsedGifts,
   onToggleCollapse,
   onAddTask,
+  onQuickAdd,
   onEditTask,
   onToggleComplete,
   onDeleteTask,
   accentBg,
   accentBgHover,
 }) => {
+  const [quickAddRecipient, setQuickAddRecipient] = useState<string | null>(null);
+
+  const startQuickAdd = (recName: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (collapsedGifts[recName]) {
+      onToggleCollapse(recName);
+    }
+    setQuickAddRecipient(recName);
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex justify-end pt-1">
@@ -51,16 +64,18 @@ const GiftsTab: React.FC<GiftsTabProps> = ({
         </div>
       ) : (
         <div className="space-y-6">
-          {orderedGiftRecipientNames.map(recName => {
+          {orderedGiftRecipientNames.map((recName) => {
             const recObj = giftRecipients.find((r: any) => r.name === recName);
             const colorVal = recObj ? recObj.color : 'blue';
-            
+
             const dotBg = getDotBgClass(colorVal);
             const textTheme = getTextThemeClass(colorVal);
+            const isCollapsed = !!collapsedGifts[recName];
+            const showQuickAdd = quickAddRecipient === recName && !isCollapsed;
 
             return (
               <div key={recName} className="space-y-2.5 animate-fade-in">
-                <div 
+                <div
                   onClick={() => onToggleCollapse(recName)}
                   className="flex items-center justify-between pb-1 border-b border-pink-50 cursor-pointer select-none group/rec"
                 >
@@ -74,25 +89,34 @@ const GiftsTab: React.FC<GiftsTabProps> = ({
                     </span>
                   </div>
 
-                  <div className="flex items-center gap-1.5">
-                    <button 
+                  <div className="flex items-center gap-0.5">
+                    <button
+                      type="button"
+                      onClick={(e) => startQuickAdd(recName, e)}
+                      className="p-1 hover:bg-pink-50 rounded-lg text-slate-400 hover:text-pink-600 transition-colors"
+                      aria-label="Быстро добавить"
+                      title="Быстро добавить"
+                    >
+                      <Plus size={16} strokeWidth={2.5} />
+                    </button>
+                    <button
                       type="button"
                       className="p-1 hover:bg-pink-50 rounded-lg text-slate-400 hover:text-pink-600 transition-colors"
-                      aria-label={collapsedGifts[recName] ? "Развернуть" : "Свернуть"}
+                      aria-label={isCollapsed ? 'Развернуть' : 'Свернуть'}
                     >
-                      <ChevronDown 
-                        size={16} 
-                        className={`transition-transform duration-200 ${collapsedGifts[recName] ? '-rotate-90 text-slate-400' : 'text-slate-600'}`} 
+                      <ChevronDown
+                        size={16}
+                        className={`transition-transform duration-200 ${isCollapsed ? '-rotate-90 text-slate-400' : 'text-slate-600'}`}
                       />
                     </button>
                   </div>
                 </div>
 
-                {!collapsedGifts[recName] && (
+                {!isCollapsed && (
                   <div className="space-y-2">
-                    {groupedGifts[recName].map(task => (
-                      <div 
-                        key={task.id} 
+                    {groupedGifts[recName].map((task) => (
+                      <div
+                        key={task.id}
                         onClick={(e) => {
                           const isButton = (e.target as HTMLElement).closest('button');
                           if (!isButton) {
@@ -100,8 +124,8 @@ const GiftsTab: React.FC<GiftsTabProps> = ({
                           }
                         }}
                         className={`relative border px-3.5 py-2 rounded-2xl transition-all flex items-center justify-between group cursor-pointer ${
-                          task.completed 
-                            ? 'bg-slate-50/30 border-slate-100 text-slate-400 line-through opacity-80' 
+                          task.completed
+                            ? 'bg-slate-50/30 border-slate-100 text-slate-400 line-through opacity-80'
                             : `${getTaskBgClass(task.color || colorVal)} border-black/5 hover:shadow-md`
                         }`}
                       >
@@ -151,6 +175,17 @@ const GiftsTab: React.FC<GiftsTabProps> = ({
                         )}
                       </div>
                     ))}
+
+                    {showQuickAdd && (
+                      <CategoryQuickAdd
+                        placeholder="Новый подарок…"
+                        onSubmit={(title) => {
+                          onQuickAdd(recName, title);
+                          setQuickAddRecipient(null);
+                        }}
+                        onCancel={() => setQuickAddRecipient(null)}
+                      />
+                    )}
                   </div>
                 )}
               </div>

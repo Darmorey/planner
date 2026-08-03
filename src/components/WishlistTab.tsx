@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Plus, Gift, ChevronDown, CheckCircle2, Circle, Edit2, Trash2, Sparkles } from 'lucide-react';
 import { Task } from '../types';
 import { getDotBgClass, getTextThemeClass, getTaskBgClass } from '../utils/themeHelpers';
+import CategoryQuickAdd from './CategoryQuickAdd';
 
 interface WishlistTabProps {
   wishlistTasks: Task[];
@@ -11,6 +12,7 @@ interface WishlistTabProps {
   collapsedWishes: Record<string, boolean>;
   onToggleCollapse: (categoryName: string) => void;
   onAddTask: () => void;
+  onQuickAdd: (categoryName: string, title: string) => void;
   onEditTask: (task: Task) => void;
   onToggleComplete: (taskId: string) => void;
   onDeleteTask: (taskId: string) => void;
@@ -26,12 +28,23 @@ const WishlistTab: React.FC<WishlistTabProps> = ({
   collapsedWishes,
   onToggleCollapse,
   onAddTask,
+  onQuickAdd,
   onEditTask,
   onToggleComplete,
   onDeleteTask,
   accentBg,
   accentBgHover,
 }) => {
+  const [quickAddCategory, setQuickAddCategory] = useState<string | null>(null);
+
+  const startQuickAdd = (catName: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (collapsedWishes[catName]) {
+      onToggleCollapse(catName);
+    }
+    setQuickAddCategory(catName);
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex justify-end pt-1">
@@ -51,16 +64,18 @@ const WishlistTab: React.FC<WishlistTabProps> = ({
         </div>
       ) : (
         <div className="space-y-6">
-          {orderedWishlistCategoryNames.map(catName => {
+          {orderedWishlistCategoryNames.map((catName) => {
             const catObj = wishlistCategories.find((c: any) => c.name === catName);
             const colorVal = catObj ? catObj.color : 'red';
-            
+
             const dotBg = getDotBgClass(colorVal);
             const textTheme = getTextThemeClass(colorVal);
+            const isCollapsed = !!collapsedWishes[catName];
+            const showQuickAdd = quickAddCategory === catName && !isCollapsed;
 
             return (
               <div key={catName} className="space-y-2.5 animate-fade-in">
-                <div 
+                <div
                   onClick={() => onToggleCollapse(catName)}
                   className="flex items-center justify-between pb-1 border-b border-rose-100/40 cursor-pointer select-none group/cat"
                 >
@@ -73,26 +88,35 @@ const WishlistTab: React.FC<WishlistTabProps> = ({
                       {groupedWishes[catName].length}
                     </span>
                   </div>
-                  
-                  <div className="flex items-center gap-1.5">
-                    <button 
+
+                  <div className="flex items-center gap-0.5">
+                    <button
+                      type="button"
+                      onClick={(e) => startQuickAdd(catName, e)}
+                      className="p-1 hover:bg-rose-100/30 rounded-lg text-slate-400 hover:text-rose-500 transition-colors"
+                      aria-label="Быстро добавить"
+                      title="Быстро добавить"
+                    >
+                      <Plus size={16} strokeWidth={2.5} />
+                    </button>
+                    <button
                       type="button"
                       className="p-1 hover:bg-rose-100/30 rounded-lg text-slate-400 hover:text-rose-500 transition-colors"
-                      aria-label={collapsedWishes[catName] ? "Развернуть" : "Свернуть"}
+                      aria-label={isCollapsed ? 'Развернуть' : 'Свернуть'}
                     >
-                      <ChevronDown 
-                        size={16} 
-                        className={`transition-transform duration-200 ${collapsedWishes[catName] ? '-rotate-90 text-slate-400' : 'text-slate-600'}`} 
+                      <ChevronDown
+                        size={16}
+                        className={`transition-transform duration-200 ${isCollapsed ? '-rotate-90 text-slate-400' : 'text-slate-600'}`}
                       />
                     </button>
                   </div>
                 </div>
 
-                {!collapsedWishes[catName] && (
+                {!isCollapsed && (
                   <div className="space-y-2">
-                    {groupedWishes[catName].map(task => (
-                      <div 
-                        key={task.id} 
+                    {groupedWishes[catName].map((task) => (
+                      <div
+                        key={task.id}
                         onClick={(e) => {
                           const isButton = (e.target as HTMLElement).closest('button');
                           if (!isButton) {
@@ -100,8 +124,8 @@ const WishlistTab: React.FC<WishlistTabProps> = ({
                           }
                         }}
                         className={`relative border px-3.5 py-2 rounded-2xl transition-all flex items-center justify-between group cursor-pointer ${
-                          task.completed 
-                            ? 'bg-slate-50/30 border-slate-100 text-slate-400 line-through opacity-80' 
+                          task.completed
+                            ? 'bg-slate-50/30 border-slate-100 text-slate-400 line-through opacity-80'
                             : `${getTaskBgClass(task.color || colorVal)} border-black/5 hover:shadow-md`
                         }`}
                       >
@@ -151,6 +175,17 @@ const WishlistTab: React.FC<WishlistTabProps> = ({
                         )}
                       </div>
                     ))}
+
+                    {showQuickAdd && (
+                      <CategoryQuickAdd
+                        placeholder="Новое желание…"
+                        onSubmit={(title) => {
+                          onQuickAdd(catName, title);
+                          setQuickAddCategory(null);
+                        }}
+                        onCancel={() => setQuickAddCategory(null)}
+                      />
+                    )}
                   </div>
                 )}
               </div>

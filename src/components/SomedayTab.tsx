@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Plus, ListTodo, ChevronDown, CheckCircle2, Circle, Edit2, Trash2 } from 'lucide-react';
 import { Task } from '../types';
 import { getDotBgClass, getTextThemeClass, getTaskBgClass } from '../utils/themeHelpers';
+import CategoryQuickAdd from './CategoryQuickAdd';
 
 interface SomedayTabProps {
   somedayTasks: Task[];
@@ -11,6 +12,7 @@ interface SomedayTabProps {
   collapsedSomeday: Record<string, boolean>;
   onToggleCollapse: (categoryName: string) => void;
   onAddTask: () => void;
+  onQuickAdd: (categoryName: string, title: string) => void;
   onEditTask: (task: Task) => void;
   onToggleComplete: (taskId: string) => void;
   onDeleteTask: (taskId: string) => void;
@@ -26,12 +28,23 @@ const SomedayTab: React.FC<SomedayTabProps> = ({
   collapsedSomeday,
   onToggleCollapse,
   onAddTask,
+  onQuickAdd,
   onEditTask,
   onToggleComplete,
   onDeleteTask,
   accentBg,
   accentBgHover,
 }) => {
+  const [quickAddCategory, setQuickAddCategory] = useState<string | null>(null);
+
+  const startQuickAdd = (catName: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (collapsedSomeday[catName]) {
+      onToggleCollapse(catName);
+    }
+    setQuickAddCategory(catName);
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex justify-end pt-1">
@@ -51,16 +64,18 @@ const SomedayTab: React.FC<SomedayTabProps> = ({
         </div>
       ) : (
         <div className="space-y-6">
-          {orderedSomedayCategoryNames.map(catName => {
+          {orderedSomedayCategoryNames.map((catName) => {
             const catObj = somedayCategories.find((c: any) => c.name === catName);
             const colorVal = catObj ? catObj.color : 'dark';
-            
+
             const dotBg = getDotBgClass(colorVal);
             const textTheme = getTextThemeClass(colorVal);
+            const isCollapsed = !!collapsedSomeday[catName];
+            const showQuickAdd = quickAddCategory === catName && !isCollapsed;
 
             return (
               <div key={catName} className="space-y-2.5 animate-fade-in">
-                <div 
+                <div
                   onClick={() => onToggleCollapse(catName)}
                   className="flex items-center justify-between pb-1 border-b border-[#6D9773]/10 cursor-pointer select-none group/cat"
                 >
@@ -74,28 +89,37 @@ const SomedayTab: React.FC<SomedayTabProps> = ({
                     </span>
                   </div>
 
-                  <div className="flex items-center gap-1.5">
-                    <button 
+                  <div className="flex items-center gap-0.5">
+                    <button
+                      type="button"
+                      onClick={(e) => startQuickAdd(catName, e)}
+                      className="p-1 hover:bg-[#6D9773]/10 rounded-lg text-slate-400 hover:text-[#6D9773] transition-colors"
+                      aria-label="Быстро добавить"
+                      title="Быстро добавить"
+                    >
+                      <Plus size={16} strokeWidth={2.5} />
+                    </button>
+                    <button
                       type="button"
                       className="p-1 hover:bg-[#6D9773]/10 rounded-lg text-slate-400 hover:text-[#6D9773] transition-colors"
-                      aria-label={collapsedSomeday[catName] ? "Развернуть" : "Свернуть"}
+                      aria-label={isCollapsed ? 'Развернуть' : 'Свернуть'}
                     >
-                      <ChevronDown 
-                        size={16} 
-                        className={`transition-transform duration-200 ${collapsedSomeday[catName] ? '-rotate-90 text-slate-400' : 'text-slate-600'}`} 
+                      <ChevronDown
+                        size={16}
+                        className={`transition-transform duration-200 ${isCollapsed ? '-rotate-90 text-slate-400' : 'text-slate-600'}`}
                       />
                     </button>
                   </div>
                 </div>
 
-                {!collapsedSomeday[catName] && (
+                {!isCollapsed && (
                   <div className="space-y-2">
-                    {groupedSomeday[catName].map(task => {
+                    {groupedSomeday[catName].map((task) => {
                       const itemCol = task.color || colorVal;
 
                       return (
-                        <div 
-                          key={task.id} 
+                        <div
+                          key={task.id}
                           onClick={(e) => {
                             const isButton = (e.target as HTMLElement).closest('button');
                             if (!isButton) {
@@ -103,8 +127,8 @@ const SomedayTab: React.FC<SomedayTabProps> = ({
                             }
                           }}
                           className={`relative border px-3.5 py-2 rounded-2xl transition-all flex items-center justify-between group cursor-pointer ${
-                            task.completed 
-                              ? 'bg-slate-50/30 border-slate-100 text-slate-400 line-through opacity-80' 
+                            task.completed
+                              ? 'bg-slate-50/30 border-slate-100 text-slate-400 line-through opacity-80'
                               : `${getTaskBgClass(itemCol)} border-black/5 hover:shadow-md`
                           }`}
                         >
@@ -147,6 +171,17 @@ const SomedayTab: React.FC<SomedayTabProps> = ({
                         </div>
                       );
                     })}
+
+                    {showQuickAdd && (
+                      <CategoryQuickAdd
+                        placeholder="Новая задача…"
+                        onSubmit={(title) => {
+                          onQuickAdd(catName, title);
+                          setQuickAddCategory(null);
+                        }}
+                        onCancel={() => setQuickAddCategory(null)}
+                      />
+                    )}
                   </div>
                 )}
               </div>

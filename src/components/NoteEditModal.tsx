@@ -1,23 +1,24 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { X, Save, Trash2 } from 'lucide-react';
 import { DayNote } from '../types';
+import { ThemeId } from '../utils/themeTypes';
 
 interface NoteEditModalProps {
   isOpen: boolean;
   onClose: () => void;
   note: DayNote | null; // Null means we're adding a new note
   selectedDate: string;
-  theme: 'standard' | 'autumn' | 'gray' | 'bright';
+  theme: ThemeId;
   onSave: (noteData: { id?: string; title: string; content: string; date: string }) => void;
   onDelete?: (id: string) => void;
 }
 
 interface EditModalStyles {
-  modalBg: string;             
-  inputBg: string;             
-  inputFocusRing: string;      
-  saveBtnBg: string;           
-  saveBtnHoverBg: string;      
+  modalBg: string;
+  inputBg: string;
+  inputFocusRing: string;
+  saveBtnBg: string;
+  saveBtnHoverBg: string;
   saveBtnText: string;
   placeholderColor: string;
   labelColor: string;
@@ -26,13 +27,17 @@ interface EditModalStyles {
   closeBtnColor: string;
   calMonthColor: string;
   calDateColor: string;
+  calBtnBg: string;
   deleteBtnBg: string;
+  deleteBtnHoverBg: string;
   deleteBtnText: string;
   deleteBtnBorder: string;
+  divider: string;
+  border: string;
   scrollbarThumbColor: string;
 }
 
-const themeEditStyles: Record<'standard' | 'autumn' | 'gray' | 'bright', EditModalStyles> = {
+const themeEditStyles: Record<ThemeId, EditModalStyles> = {
   standard: {
     modalBg: 'bg-[#D1D9CA]',
     inputBg: 'bg-[#E3EAE0]/85 focus:bg-white',
@@ -47,29 +52,60 @@ const themeEditStyles: Record<'standard' | 'autumn' | 'gray' | 'bright', EditMod
     closeBtnColor: 'text-[#50685B] hover:bg-[#0C3B2E]/5 hover:text-[#0C3B2E]',
     calMonthColor: 'text-[#A26D3C]',
     calDateColor: 'text-[#0C3B2E]',
+    calBtnBg: 'bg-white/90 hover:bg-white',
     deleteBtnBg: 'bg-white/90',
+    deleteBtnHoverBg: 'hover:bg-white',
     deleteBtnText: 'text-[#8A3730]',
     deleteBtnBorder: 'border-black/5',
+    divider: 'border-black/5',
+    border: 'border-black/5',
     scrollbarThumbColor: '#0C3B2E'
   },
+  forestDark: {
+    modalBg: 'bg-[#0C3B2E]',
+    inputBg: 'bg-[#134A3A] focus:bg-[#1A5543]',
+    inputFocusRing: 'focus:ring-[#C9A227]/25 focus:border-[#C9A227]/40',
+    saveBtnBg: 'bg-[#C9A227]',
+    saveBtnHoverBg: 'hover:bg-[#B89220]',
+    saveBtnText: 'text-[#042018]',
+    placeholderColor: 'placeholder-emerald-100/40',
+    labelColor: 'text-[#E8F0EA]',
+    subtextColor: 'text-emerald-100/60',
+    titleColor: 'text-[#E8F0EA]',
+    closeBtnColor: 'text-emerald-100/60 hover:bg-white/5 hover:text-[#E8F0EA]',
+    calMonthColor: 'text-[#C9A227]',
+    calDateColor: 'text-[#E8F0EA]',
+    calBtnBg: 'bg-[#134A3A] hover:bg-[#1A5543]',
+    deleteBtnBg: 'bg-[#134A3A]',
+    deleteBtnHoverBg: 'hover:bg-[#1A5543]',
+    deleteBtnText: 'text-rose-300',
+    deleteBtnBorder: 'border-white/5',
+    divider: 'border-white/5',
+    border: 'border-white/5',
+    scrollbarThumbColor: '#C9A227'
+  },
   autumn: {
-    modalBg: 'bg-[#F5E6DB]',
+    modalBg: 'bg-[#EDE4DB]',
     inputBg: 'bg-[#FDF9F6] focus:bg-white',
-    inputFocusRing: 'focus:ring-[#853C1F]/20 focus:border-[#853C1F]/40',
+    inputFocusRing: 'focus:ring-[#A67C5D]/25 focus:border-[#A67C5D]/40',
     saveBtnBg: 'bg-white/90',
     saveBtnHoverBg: 'hover:bg-white',
-    saveBtnText: 'text-[#6B2D14]',
-    placeholderColor: 'placeholder-[#AA9287]',
-    labelColor: 'text-[#6B2D14]',
+    saveBtnText: 'text-[#5C4033]',
+    placeholderColor: 'placeholder-[#B5A49A]',
+    labelColor: 'text-[#5C4033]',
     subtextColor: 'text-[#8C6D5F]',
-    titleColor: 'text-[#6B2D14]',
-    closeBtnColor: 'text-[#8C6D5F] hover:bg-[#6B2D14]/5 hover:text-[#6B2D14]',
-    calMonthColor: 'text-[#B55D2B]',
-    calDateColor: 'text-[#6B2D14]',
+    titleColor: 'text-[#5C4033]',
+    closeBtnColor: 'text-[#8C6D5F] hover:bg-[#5C4033]/5 hover:text-[#5C4033]',
+    calMonthColor: 'text-[#A67C5D]',
+    calDateColor: 'text-[#5C4033]',
+    calBtnBg: 'bg-white/90 hover:bg-white',
     deleteBtnBg: 'bg-white/90',
+    deleteBtnHoverBg: 'hover:bg-white',
     deleteBtnText: 'text-[#9C3823]',
     deleteBtnBorder: 'border-black/5',
-    scrollbarThumbColor: '#6B2D14'
+    divider: 'border-black/5',
+    border: 'border-black/5',
+    scrollbarThumbColor: '#5C4033'
   },
   gray: {
     modalBg: 'bg-[#EAEAEA]',
@@ -85,29 +121,37 @@ const themeEditStyles: Record<'standard' | 'autumn' | 'gray' | 'bright', EditMod
     closeBtnColor: 'text-[#71717A] hover:bg-[#27272A]/5 hover:text-[#27272A]',
     calMonthColor: 'text-[#71717A]',
     calDateColor: 'text-[#27272A]',
+    calBtnBg: 'bg-white/90 hover:bg-white',
     deleteBtnBg: 'bg-white/90',
+    deleteBtnHoverBg: 'hover:bg-white',
     deleteBtnText: 'text-[#71717A]',
     deleteBtnBorder: 'border-black/5',
+    divider: 'border-black/5',
+    border: 'border-black/5',
     scrollbarThumbColor: '#27272A'
   },
   bright: {
-    modalBg: 'bg-[#EADCF5]',
-    inputBg: 'bg-[#F8F3FC] focus:bg-white',
-    inputFocusRing: 'focus:ring-[#2F217A]/20 focus:border-[#2F217A]/40',
+    modalBg: 'bg-[#E8E5F2]',
+    inputBg: 'bg-[#F7F5FB] focus:bg-white',
+    inputFocusRing: 'focus:ring-[#7B74A8]/25 focus:border-[#7B74A8]/40',
     saveBtnBg: 'bg-white/90',
     saveBtnHoverBg: 'hover:bg-white',
-    saveBtnText: 'text-[#EC4899]',
-    placeholderColor: 'placeholder-[#A594C5]',
-    labelColor: 'text-[#2F217A]',
-    subtextColor: 'text-[#69569F]',
-    titleColor: 'text-[#2F217A]',
-    closeBtnColor: 'text-[#69569F] hover:bg-[#2F217A]/5 hover:text-[#2F217A]',
-    calMonthColor: 'text-[#EC4899]',
-    calDateColor: 'text-[#2F217A]',
+    saveBtnText: 'text-[#3D3A5C]',
+    placeholderColor: 'placeholder-[#A8A3C2]',
+    labelColor: 'text-[#3D3A5C]',
+    subtextColor: 'text-[#6A6396]',
+    titleColor: 'text-[#3D3A5C]',
+    closeBtnColor: 'text-[#6A6396] hover:bg-[#3D3A5C]/5 hover:text-[#3D3A5C]',
+    calMonthColor: 'text-[#7B74A8]',
+    calDateColor: 'text-[#3D3A5C]',
+    calBtnBg: 'bg-white/90 hover:bg-white',
     deleteBtnBg: 'bg-white/90',
-    deleteBtnText: 'text-[#BE185D]',
+    deleteBtnHoverBg: 'hover:bg-white',
+    deleteBtnText: 'text-[#9B4F6C]',
     deleteBtnBorder: 'border-black/5',
-    scrollbarThumbColor: '#2F217A'
+    divider: 'border-black/5',
+    border: 'border-black/5',
+    scrollbarThumbColor: '#3D3A5C'
   }
 };
 
@@ -179,7 +223,7 @@ export default function NoteEditModal({
 
   return (
     <div className="fixed inset-0 bg-slate-950/40 backdrop-blur-[2px] flex items-center justify-center p-4 z-[60] animate-fade-in font-sans">
-      <div className={`${styles.modalBg} text-white rounded-3xl w-full max-w-5xl h-[88vh] border border-black/5 shadow-2xl p-6 sm:p-8 flex flex-col relative overflow-hidden`}>
+      <div className={`${styles.modalBg} rounded-3xl w-full max-w-5xl h-[88vh] border ${styles.border} shadow-2xl p-6 sm:p-8 flex flex-col relative overflow-hidden`}>
         
         {/* Close Button */}
         <button
@@ -208,7 +252,7 @@ export default function NoteEditModal({
               placeholder="Название"
               value={title}
               onChange={e => setTitle(e.target.value)}
-              className={`w-full ${styles.inputBg} border border-black/5 rounded-2xl px-4 py-3.5 text-lg font-bold ${styles.titleColor} focus:outline-none focus:ring-1 ${styles.inputFocusRing} transition-all ${styles.placeholderColor}`}
+              className={`w-full ${styles.inputBg} border ${styles.border} rounded-2xl px-4 py-3.5 text-lg font-bold ${styles.titleColor} focus:outline-none focus:ring-1 ${styles.inputFocusRing} transition-all ${styles.placeholderColor}`}
             />
           </div>
 
@@ -218,7 +262,7 @@ export default function NoteEditModal({
               placeholder="Описание"
               value={content}
               onChange={e => setContent(e.target.value)}
-              className={`flex-1 w-full ${styles.inputBg} border border-black/5 rounded-2xl px-5 py-4 text-base ${styles.titleColor} focus:outline-none focus:ring-1 ${styles.inputFocusRing} transition-all ${styles.placeholderColor} resize-none leading-relaxed overflow-y-auto [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-[var(--scrollbar-thumb-color)] [&::-webkit-scrollbar-thumb]:rounded-full`}
+              className={`flex-1 w-full ${styles.inputBg} border ${styles.border} rounded-2xl px-5 py-4 text-base ${styles.titleColor} focus:outline-none focus:ring-1 ${styles.inputFocusRing} transition-all ${styles.placeholderColor} resize-none leading-relaxed overflow-y-auto [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-[var(--scrollbar-thumb-color)] [&::-webkit-scrollbar-thumb]:rounded-full`}
               style={{
                 scrollbarWidth: 'thin',
                 scrollbarColor: `${styles.scrollbarThumbColor} transparent`,
@@ -228,7 +272,7 @@ export default function NoteEditModal({
           </div>
 
           {/* Bottom Action row */}
-          <div className="flex items-center gap-4 pt-4 border-t border-black/5 w-full shrink-0">
+          <div className={`flex items-center gap-4 pt-4 border-t ${styles.divider} w-full shrink-0`}>
             {/* Tear-off calendar date selection button */}
             <div className="relative shrink-0">
               <button
@@ -240,7 +284,7 @@ export default function NoteEditModal({
                     dateInputRef.current?.click?.();
                   }
                 }}
-                className="flex flex-col items-center justify-center w-12 h-12 rounded-xl bg-white/90 border border-black/5 shadow-sm select-none hover:bg-white active:scale-95 transition-all duration-150"
+                className={`flex flex-col items-center justify-center w-12 h-12 rounded-xl ${styles.calBtnBg} border ${styles.border} shadow-sm select-none active:scale-95 transition-all duration-150`}
                 title="Выбрать дату"
               >
                 <span className={`text-[9px] font-extrabold ${styles.calMonthColor} uppercase tracking-wider leading-none`}>
@@ -262,7 +306,7 @@ export default function NoteEditModal({
             {/* Save Button */}
             <button
               type="submit"
-              className={`flex-1 py-3 px-4 h-12 rounded-xl font-bold text-sm tracking-wide ${styles.saveBtnBg} ${styles.saveBtnHoverBg} ${styles.saveBtnText} shadow-sm border border-black/5 active:scale-98 transition-all duration-150 flex items-center justify-center gap-1.5`}
+              className={`flex-1 py-3 px-4 h-12 rounded-xl font-bold text-sm tracking-wide ${styles.saveBtnBg} ${styles.saveBtnHoverBg} ${styles.saveBtnText} shadow-sm border ${styles.border} active:scale-98 transition-all duration-150 flex items-center justify-center gap-1.5`}
             >
               <Save size={15} />
               <span>Сохранить</span>
@@ -278,7 +322,7 @@ export default function NoteEditModal({
                     onClose();
                   }
                 }}
-                className={`py-3 px-4 h-12 rounded-xl font-bold text-sm ${styles.deleteBtnBg} hover:bg-white ${styles.deleteBtnText} border ${styles.deleteBtnBorder} shadow-sm active:scale-98 transition-all duration-150 flex items-center justify-center gap-1.5`}
+                className={`py-3 px-4 h-12 rounded-xl font-bold text-sm ${styles.deleteBtnBg} ${styles.deleteBtnHoverBg} ${styles.deleteBtnText} border ${styles.deleteBtnBorder} shadow-sm active:scale-98 transition-all duration-150 flex items-center justify-center gap-1.5`}
                 title="Удалить заметку"
               >
                 <Trash2 size={15} />

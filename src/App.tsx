@@ -26,11 +26,20 @@ import SomedayTab from './components/SomedayTab';
 import WishlistTab from './components/WishlistTab';
 import GiftsTab from './components/GiftsTab';
 
+import { ThemeId, isThemeId } from './utils/themeTypes';
+
 interface ThemeConfig {
-  id: 'standard' | 'autumn' | 'gray' | 'bright';
+  id: ThemeId;
   name: string;
+  isDark: boolean;
   bodyBg: string;
   appBg: string;
+  contentBg: string;
+  cardBg: string;
+  chipBg: string;
+  chipBorder: string;
+  mutedText: string;
+  mutedHover: string;
   headerBg: string;
   headerGradientFrom: string;
   headerGradientTo: string;
@@ -50,12 +59,19 @@ interface ThemeConfig {
   selectionClasses: string;
 }
 
-const THEMES: Record<'standard' | 'autumn' | 'gray' | 'bright', ThemeConfig> = {
+const THEMES: Record<ThemeId, ThemeConfig> = {
   standard: {
     id: 'standard',
-    name: 'Стандартная',
+    name: 'Лес',
+    isDark: false,
     bodyBg: 'bg-[#D1D9CA]',
     appBg: 'bg-white',
+    contentBg: 'bg-slate-50/40',
+    cardBg: 'bg-white',
+    chipBg: 'bg-white',
+    chipBorder: 'border-slate-100',
+    mutedText: 'text-slate-500',
+    mutedHover: 'hover:text-slate-800 hover:bg-slate-50/40',
     headerBg: 'bg-[#0C3B2E]',
     headerGradientFrom: '#CBD6C4',
     headerGradientTo: '#A7BFA0',
@@ -74,83 +90,135 @@ const THEMES: Record<'standard' | 'autumn' | 'gray' | 'bright', ThemeConfig> = {
     subAccentText: 'text-[#6D9773]',
     selectionClasses: 'selection:bg-[#6D9773]/30 selection:text-[#0C3B2E]'
   },
+  forestDark: {
+    id: 'forestDark',
+    name: 'Ночной лес',
+    isDark: true,
+    bodyBg: 'bg-[#042018]',
+    appBg: 'bg-[#0A2820]',
+    contentBg: 'bg-[#051F19]',
+    cardBg: 'bg-[#0C3B2E]',
+    chipBg: 'bg-[#134A3A]',
+    chipBorder: 'border-white/10',
+    mutedText: 'text-emerald-100/55',
+    mutedHover: 'hover:text-[#E8F0EA] hover:bg-white/5',
+    headerBg: 'bg-[#0C3B2E]',
+    headerGradientFrom: '#1A4D3E',
+    headerGradientTo: '#0C3B2E',
+    accentText: 'text-[#E8F0EA]',
+    accentTextHover: 'hover:text-white',
+    accentBorder: 'border-white/10',
+    accentBorderSolid: 'border-[#6D9773]',
+    accentBg: 'bg-[#6D9773]',
+    accentBgHover: 'hover:bg-[#58825e]',
+    subAccentBgLight: 'bg-[#6D9773]/15',
+    subAccentBgLight5: 'bg-[#6D9773]/10',
+    subAccentBorderLight: 'border-[#6D9773]/25',
+    subAccentBorderLight10: 'border-[#6D9773]/15',
+    subAccentBg: 'bg-[#6D9773]',
+    subAccentHover: 'hover:bg-[#7DAB83]',
+    subAccentText: 'text-[#A7C4AA]',
+    selectionClasses: 'selection:bg-[#6D9773]/40 selection:text-white'
+  },
   autumn: {
     id: 'autumn',
-    name: 'Теплая осень',
-    bodyBg: 'bg-[#F6EFEA]',
-    appBg: 'bg-white',
-    headerBg: 'bg-[#6B2D14]',
-    headerGradientFrom: '#E39054',
-    headerGradientTo: '#F4C175',
-    accentText: 'text-[#6B2D14]',
-    accentTextHover: 'hover:text-[#6B2D14]',
-    accentBorder: 'border-[#6B2D14]/15',
-    accentBorderSolid: 'border-[#6B2D14]',
-    accentBg: 'bg-[#BC5225]',
-    accentBgHover: 'hover:bg-[#9B3D17]',
-    subAccentBgLight: 'bg-[#BC5225]/10',
-    subAccentBgLight5: 'bg-[#BC5225]/5',
-    subAccentBorderLight: 'border-[#BC5225]/15',
-    subAccentBorderLight10: 'border-[#BC5225]/10',
-    subAccentBg: 'bg-[#BC5225]',
-    subAccentHover: 'hover:bg-[#9B3D17]',
-    subAccentText: 'text-[#BC5225]',
-    selectionClasses: 'selection:bg-[#BC5225]/30 selection:text-[#6B2D14]'
+    name: 'Песок',
+    isDark: false,
+    bodyBg: 'bg-[#F3EEE8]',
+    appBg: 'bg-[#FFFbf7]',
+    contentBg: 'bg-[#F7F2EC]',
+    cardBg: 'bg-white',
+    chipBg: 'bg-white',
+    chipBorder: 'border-[#5C4033]/10',
+    mutedText: 'text-slate-500',
+    mutedHover: 'hover:text-slate-800 hover:bg-slate-50/40',
+    headerBg: 'bg-[#5C4033]',
+    headerGradientFrom: '#C4A484',
+    headerGradientTo: '#E8D5C4',
+    accentText: 'text-[#5C4033]',
+    accentTextHover: 'hover:text-[#5C4033]',
+    accentBorder: 'border-[#5C4033]/12',
+    accentBorderSolid: 'border-[#5C4033]',
+    accentBg: 'bg-[#A67C5D]',
+    accentBgHover: 'hover:bg-[#8F684C]',
+    subAccentBgLight: 'bg-[#A67C5D]/12',
+    subAccentBgLight5: 'bg-[#A67C5D]/8',
+    subAccentBorderLight: 'border-[#A67C5D]/18',
+    subAccentBorderLight10: 'border-[#A67C5D]/12',
+    subAccentBg: 'bg-[#A67C5D]',
+    subAccentHover: 'hover:bg-[#8F684C]',
+    subAccentText: 'text-[#8F684C]',
+    selectionClasses: 'selection:bg-[#A67C5D]/25 selection:text-[#5C4033]'
   },
   gray: {
     id: 'gray',
-    name: 'Минималистичный серый',
+    name: 'Камень',
+    isDark: false,
     bodyBg: 'bg-[#ECECED]',
     appBg: 'bg-white',
-    headerBg: 'bg-[#27272A]',
+    contentBg: 'bg-slate-50/50',
+    cardBg: 'bg-white',
+    chipBg: 'bg-white',
+    chipBorder: 'border-slate-100',
+    mutedText: 'text-slate-500',
+    mutedHover: 'hover:text-slate-800 hover:bg-slate-50/40',
+    headerBg: 'bg-[#3F3F46]',
     headerGradientFrom: '#A1A1AA',
     headerGradientTo: '#E4E4E7',
-    accentText: 'text-[#18181B]',
+    accentText: 'text-[#27272A]',
     accentTextHover: 'hover:text-[#18181B]',
-    accentBorder: 'border-[#18181B]/15',
-    accentBorderSolid: 'border-[#18181B]',
-    accentBg: 'bg-[#27272A]',
-    accentBgHover: 'hover:bg-[#18181B]',
-    subAccentBgLight: 'bg-[#52525B]/10',
-    subAccentBgLight5: 'bg-[#52525B]/5',
-    subAccentBorderLight: 'border-[#52525B]/15',
-    subAccentBorderLight10: 'border-[#52525B]/10',
-    subAccentBg: 'bg-[#52525B]',
-    subAccentHover: 'hover:bg-[#3F3F46]',
+    accentBorder: 'border-[#27272A]/12',
+    accentBorderSolid: 'border-[#3F3F46]',
+    accentBg: 'bg-[#3F3F46]',
+    accentBgHover: 'hover:bg-[#27272A]',
+    subAccentBgLight: 'bg-[#71717A]/10',
+    subAccentBgLight5: 'bg-[#71717A]/5',
+    subAccentBorderLight: 'border-[#71717A]/15',
+    subAccentBorderLight10: 'border-[#71717A]/10',
+    subAccentBg: 'bg-[#71717A]',
+    subAccentHover: 'hover:bg-[#52525B]',
     subAccentText: 'text-[#52525B]',
     selectionClasses: 'selection:bg-slate-200 selection:text-slate-900'
   },
   bright: {
     id: 'bright',
-    name: 'Яркий акцент',
-    bodyBg: 'bg-[#EEF2F6]',
-    appBg: 'bg-white',
-    headerBg: 'bg-[#2F217A]',
-    headerGradientFrom: '#6D28D9',
-    headerGradientTo: '#EC4899',
-    accentText: 'text-[#2F217A]',
-    accentTextHover: 'hover:text-[#2F217A]',
-    accentBorder: 'border-[#2F217A]/15',
-    accentBorderSolid: 'border-[#2F217A]',
-    accentBg: 'bg-[#6D28D9]',
-    accentBgHover: 'hover:bg-[#5B21B6]',
-    subAccentBgLight: 'bg-[#6D28D9]/10',
-    subAccentBgLight5: 'bg-[#6D28D9]/5',
-    subAccentBorderLight: 'border-[#6D28D9]/15',
-    subAccentBorderLight10: 'border-[#6D28D9]/10',
-    subAccentBg: 'bg-[#6D28D9]',
-    subAccentHover: 'hover:bg-[#5B21B6]',
-    subAccentText: 'text-[#6D28D9]',
-    selectionClasses: 'selection:bg-[#6D28D9]/20 selection:text-[#2F217A]'
+    name: 'Лаванда',
+    isDark: false,
+    bodyBg: 'bg-[#F0EEF5]',
+    appBg: 'bg-[#FBFBFE]',
+    contentBg: 'bg-[#F5F3FA]',
+    cardBg: 'bg-white',
+    chipBg: 'bg-white',
+    chipBorder: 'border-[#3D3A5C]/10',
+    mutedText: 'text-slate-500',
+    mutedHover: 'hover:text-slate-800 hover:bg-slate-50/40',
+    headerBg: 'bg-[#3D3A5C]',
+    headerGradientFrom: '#9B95B8',
+    headerGradientTo: '#D4D0E6',
+    accentText: 'text-[#3D3A5C]',
+    accentTextHover: 'hover:text-[#3D3A5C]',
+    accentBorder: 'border-[#3D3A5C]/12',
+    accentBorderSolid: 'border-[#3D3A5C]',
+    accentBg: 'bg-[#7B74A8]',
+    accentBgHover: 'hover:bg-[#6A6396]',
+    subAccentBgLight: 'bg-[#7B74A8]/12',
+    subAccentBgLight5: 'bg-[#7B74A8]/8',
+    subAccentBorderLight: 'border-[#7B74A8]/18',
+    subAccentBorderLight10: 'border-[#7B74A8]/12',
+    subAccentBg: 'bg-[#7B74A8]',
+    subAccentHover: 'hover:bg-[#6A6396]',
+    subAccentText: 'text-[#6A6396]',
+    selectionClasses: 'selection:bg-[#7B74A8]/20 selection:text-[#3D3A5C]'
   }
 };
 
 export default function App() {
   // --- STATE ---
-  const [theme, setTheme] = useState<'standard' | 'autumn' | 'gray' | 'bright'>(() => {
-    return (localStorage.getItem('task_calendar_theme') as any) || 'standard';
+  const [theme, setTheme] = useState<ThemeId>(() => {
+    const saved = localStorage.getItem('task_calendar_theme');
+    return isThemeId(saved) ? saved : 'standard';
   });
-  const t = THEMES[theme];
+  const t = THEMES[theme] || THEMES.standard;
 
   const [tasks, setTasks] = useState<Task[]>(() => {
     const saved = localStorage.getItem('planner_tasks');
@@ -245,29 +313,51 @@ export default function App() {
     };
   }, []);
 
-  // Swipe logic for week navigation
-  const touchStartRef = useRef<number | null>(null);
+  // Swipe: header = weeks, content = days
+  const weekTouchStartRef = useRef<{ x: number; y: number } | null>(null);
+  const dayTouchStartRef = useRef<{ x: number; y: number } | null>(null);
 
-  const handleTouchStart = (e: React.TouchEvent) => {
-    touchStartRef.current = e.touches[0].clientX;
+  const handleWeekTouchStart = (e: React.TouchEvent) => {
+    weekTouchStartRef.current = {
+      x: e.touches[0].clientX,
+      y: e.touches[0].clientY,
+    };
   };
 
-  const handleTouchEnd = (e: React.TouchEvent) => {
-    if (touchStartRef.current === null) return;
-    const touchEndX = e.changedTouches[0].clientX;
-    const diffX = touchStartRef.current - touchEndX;
-    const threshold = 50; // min swipe threshold in pixels
+  const handleWeekTouchEnd = (e: React.TouchEvent) => {
+    if (!weekTouchStartRef.current) return;
+    const dx = weekTouchStartRef.current.x - e.changedTouches[0].clientX;
+    const dy = weekTouchStartRef.current.y - e.changedTouches[0].clientY;
+    weekTouchStartRef.current = null;
 
-    if (Math.abs(diffX) > threshold) {
-      if (diffX > 0) {
-        // Swiped left -> navigate to next week
-        navigateDays(7);
-      } else {
-        // Swiped right -> navigate to previous week
-        navigateDays(-7);
-      }
+    if (Math.abs(dx) < 50 || Math.abs(dx) < Math.abs(dy)) return;
+    if (dx > 0) {
+      navigateWeeks(1);
+    } else {
+      navigateWeeks(-1);
     }
-    touchStartRef.current = null;
+  };
+
+  const handleDayTouchStart = (e: React.TouchEvent) => {
+    dayTouchStartRef.current = {
+      x: e.touches[0].clientX,
+      y: e.touches[0].clientY,
+    };
+  };
+
+  const handleDayTouchEnd = (e: React.TouchEvent) => {
+    if (!dayTouchStartRef.current) return;
+    const dx = dayTouchStartRef.current.x - e.changedTouches[0].clientX;
+    const dy = dayTouchStartRef.current.y - e.changedTouches[0].clientY;
+    dayTouchStartRef.current = null;
+
+    // Ignore mostly-vertical scrolls
+    if (Math.abs(dx) < 50 || Math.abs(dx) < Math.abs(dy) * 1.2) return;
+    if (dx > 0) {
+      navigateDays(1);
+    } else {
+      navigateDays(-1);
+    }
   };
 
   // --- LOCAL PERSISTENCE SYNC ---
@@ -374,6 +464,20 @@ export default function App() {
     }
     const date = parseLocalDate(selectedDate);
     date.setDate(date.getDate() + days);
+    setSelectedDate(formatLocalDate(date));
+  };
+
+  /** Jump to Monday of previous/next week */
+  const navigateWeeks = (weeks: number) => {
+    if (weeks > 0) {
+      setSlideDirection('left');
+    } else if (weeks < 0) {
+      setSlideDirection('right');
+    }
+    const date = parseLocalDate(selectedDate);
+    const dayOfWeek = date.getDay(); // 0 = Sun … 6 = Sat
+    const diffToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+    date.setDate(date.getDate() + diffToMonday + weeks * 7);
     setSelectedDate(formatLocalDate(date));
   };
 
@@ -491,6 +595,53 @@ export default function App() {
       };
       setTasks(prev => [...prev, newTask]);
     }
+  };
+
+  const handleQuickAddSomeday = (categoryName: string, title: string) => {
+    const catObj = somedayCategories.find((c: any) => c.name === categoryName);
+    const newTask: Task = {
+      id: `task-${Date.now()}`,
+      title,
+      category: 'task',
+      scope: 'personal',
+      completed: false,
+      recurrence: { pattern: 'none' },
+      somedayCategory: categoryName,
+      color: catObj?.color || 'blue',
+    };
+    setTasks((prev) => [...prev, newTask]);
+  };
+
+  const handleQuickAddWishlist = (categoryName: string, title: string) => {
+    const catObj = wishlistCategories.find((c: any) => c.name === categoryName);
+    const newTask: Task = {
+      id: `task-${Date.now()}`,
+      title,
+      category: 'task',
+      scope: 'personal',
+      completed: false,
+      recurrence: { pattern: 'none' },
+      isWishlist: true,
+      wishlistCategory: categoryName,
+      color: catObj?.color || 'red',
+    };
+    setTasks((prev) => [...prev, newTask]);
+  };
+
+  const handleQuickAddGift = (recipientName: string, title: string) => {
+    const recObj = giftRecipients.find((r: any) => r.name === recipientName);
+    const newTask: Task = {
+      id: `task-${Date.now()}`,
+      title,
+      category: 'task',
+      scope: 'personal',
+      completed: false,
+      recurrence: { pattern: 'none' },
+      isGift: true,
+      giftRecipient: recipientName,
+      color: recObj?.color || 'blue',
+    };
+    setTasks((prev) => [...prev, newTask]);
   };
 
   // --- REAL-TIME NOTES ACTIONS ---
@@ -663,8 +814,8 @@ export default function App() {
         
         {/* TOP STATUS BAR ACCENTS */}
         <div 
-          onTouchStart={handleTouchStart}
-          onTouchEnd={handleTouchEnd}
+          onTouchStart={handleWeekTouchStart}
+          onTouchEnd={handleWeekTouchEnd}
           className={`${t.headerBg} px-6 py-4 pb-6 text-white text-center relative overflow-hidden select-none`}
         >
           <div 
@@ -701,7 +852,7 @@ export default function App() {
           {/* Month Display & Navigation */}
           <div className="relative flex items-center justify-between px-1 mb-1">
             <button 
-              onClick={() => navigateDays(-7)}
+              onClick={() => navigateWeeks(-1)}
               className="flex items-center justify-center w-10 h-10 bg-white/10 hover:bg-white/20 border border-white/25 hover:border-white/45 rounded-xl shadow-md transition-all text-white active:scale-95"
               title="Предыдущая неделя"
             >
@@ -713,7 +864,7 @@ export default function App() {
             </span>
 
             <button 
-              onClick={() => navigateDays(7)}
+              onClick={() => navigateWeeks(1)}
               className="flex items-center justify-center w-10 h-10 bg-white/10 hover:bg-white/20 border border-white/25 hover:border-white/45 rounded-xl shadow-md transition-all text-white active:scale-95"
               title="Следующая неделя"
             >
@@ -770,7 +921,7 @@ export default function App() {
                       <div className={`
                         w-11 h-11 rounded-full flex items-center justify-center text-sm font-semibold transition-all relative
                         ${isSelected 
-                          ? `bg-white ${t.accentText} shadow-lg shadow-black/10 scale-110 font-bold` 
+                          ? 'bg-white text-[#0C3B2E] shadow-lg shadow-black/10 scale-110 font-bold' 
                           : 'hover:bg-white/10 text-white'
                         }
                         ${isToday && !isSelected ? 'border border-white/40 bg-white/5 text-slate-100' : ''}
@@ -806,7 +957,7 @@ export default function App() {
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border shadow-sm transition-colors text-[10px] sm:text-[11px] ${
               showFullCalendar 
                 ? `${t.subAccentBg} text-white border-transparent ${t.subAccentHover}` 
-                : `bg-white ${t.accentText} border-slate-100 hover:${t.subAccentBgLight}`
+                : `${t.chipBg} ${t.accentText} ${t.chipBorder} hover:${t.subAccentBgLight}`
             }`}
           >
             <CalendarIcon size={12} className={showFullCalendar ? 'text-white' : `${t.subAccentText}`} />
@@ -819,7 +970,7 @@ export default function App() {
               className={`flex items-center gap-1 px-3 py-1.5 rounded-full border shadow-sm transition-colors text-[10px] sm:text-[11px] ${
                 hideCompleted 
                   ? `${t.subAccentBg} text-white border-transparent ${t.subAccentHover}` 
-                  : `bg-white ${t.accentText} border-slate-100 hover:${t.subAccentBgLight}`
+                  : `${t.chipBg} ${t.accentText} ${t.chipBorder} hover:${t.subAccentBgLight}`
               }`}
             >
               {hideCompleted ? <EyeOff size={12} className="text-white" /> : <Eye size={12} className={`${t.subAccentText}`} />}
@@ -829,13 +980,13 @@ export default function App() {
         </div>
 
         {/* PERSISTENT MAIN NAVIGATION TABS */}
-        <div className={`grid grid-cols-4 border-b ${t.subAccentBorderLight} text-center text-[10px] xs:text-[11px] sm:text-xs md:text-sm font-medium text-slate-500 bg-white shadow-sm z-10`}>
+        <div className={`grid grid-cols-4 border-b ${t.subAccentBorderLight} text-center text-[10px] xs:text-[11px] sm:text-xs md:text-sm font-medium ${t.mutedText} ${t.cardBg} shadow-sm z-10`}>
           <button
             onClick={() => setCurrentTab('daily')}
             className={`py-3.5 border-b-2 transition-all flex items-center justify-center gap-1.2 sm:gap-1.5 ${
               currentTab === 'daily' 
                 ? `${t.accentBorderSolid} ${t.accentText} font-semibold ${t.subAccentBgLight5}` 
-                : 'border-transparent hover:text-slate-800 hover:bg-slate-50/40'
+                : `border-transparent ${t.mutedHover}`
             }`}
           >
             <Clock size={15} />
@@ -847,7 +998,7 @@ export default function App() {
             className={`py-3.5 border-b-2 transition-all flex items-center justify-center gap-1.2 sm:gap-1.5 ${
               currentTab === 'someday' 
                 ? `${t.accentBorderSolid} ${t.accentText} font-semibold ${t.subAccentBgLight5}` 
-                : 'border-transparent hover:text-slate-800 hover:bg-slate-50/40'
+                : `border-transparent ${t.mutedHover}`
             }`}
           >
             <Bookmark size={15} />
@@ -859,7 +1010,7 @@ export default function App() {
             className={`py-3.5 border-b-2 transition-all flex items-center justify-center gap-1.2 sm:gap-1.5 ${
               currentTab === 'wishlist' 
                 ? `${t.accentBorderSolid} ${t.accentText} font-semibold ${t.subAccentBgLight5}` 
-                : 'border-transparent hover:text-slate-800 hover:bg-slate-50/40'
+                : `border-transparent ${t.mutedHover}`
             }`}
           >
             <Heart size={15} className="text-[#FF6B8B]" />
@@ -871,7 +1022,7 @@ export default function App() {
             className={`py-3.5 border-b-2 transition-all flex items-center justify-center gap-1.2 sm:gap-1.5 ${
               currentTab === 'gifts' 
                 ? `${t.accentBorderSolid} ${t.accentText} font-semibold ${t.subAccentBgLight5}` 
-                : 'border-transparent hover:text-slate-800 hover:bg-slate-50/40'
+                : `border-transparent ${t.mutedHover}`
             }`}
           >
             <Gift size={15} className="text-yellow-600" />
@@ -880,7 +1031,7 @@ export default function App() {
         </div>
 
         {/* MAIN DISPLAY VIEWPORT */}
-        <div className="flex-1 overflow-y-auto px-6 py-6 bg-slate-50/40">
+        <div className={`flex-1 overflow-y-auto px-6 py-6 ${t.contentBg}`}>
           
           {showFullCalendar && (
             <div className="mb-6 -mx-6 animate-fade-in">
@@ -896,17 +1047,20 @@ export default function App() {
 
           {/* DAILY SCHEDULE TAB */}
           {currentTab === 'daily' && (
-            <div className="space-y-6">
-              
+            <div
+              className="space-y-6"
+              onTouchStart={handleDayTouchStart}
+              onTouchEnd={handleDayTouchEnd}
+            > 
               {/* WORKSPACE SUB-TABS (личные задачи и рабочие задачи) */}
-              <div className="flex items-center justify-between gap-2 border-b border-[#6D9773]/10 pb-3">
-                <div className="flex gap-1 sm:gap-1.5 bg-[#6D9773]/5 p-0.5 sm:p-1 rounded-xl border border-[#6D9773]/10 shrink-0">
+              <div className={`flex items-center justify-between gap-2 border-b ${t.subAccentBorderLight10} pb-3`}>
+                <div className={`flex gap-1 sm:gap-1.5 ${t.subAccentBgLight5} p-0.5 sm:p-1 rounded-xl border ${t.subAccentBorderLight10} shrink-0`}>
                   <button
                     onClick={() => setActiveScope('all')}
                     className={`px-2 py-1 sm:px-3 sm:py-1.5 rounded-lg text-[11px] sm:text-xs font-semibold whitespace-nowrap transition-all ${
                       activeScope === 'all' 
-                        ? 'bg-white text-[#0C3B2E] shadow-sm' 
-                        : 'text-slate-500 hover:text-slate-700'
+                        ? `${t.chipBg} ${t.accentText} shadow-sm` 
+                        : `${t.mutedText} ${t.accentTextHover}`
                     }`}
                   >
                     Все задачи
@@ -915,8 +1069,8 @@ export default function App() {
                     onClick={() => setActiveScope('personal')}
                     className={`px-2 py-1 sm:px-3 sm:py-1.5 rounded-lg text-[11px] sm:text-xs font-semibold whitespace-nowrap transition-all ${
                       activeScope === 'personal' 
-                        ? 'bg-[#6D9773] text-white shadow-sm' 
-                        : 'text-slate-500 hover:text-slate-700'
+                        ? `${t.subAccentBg} text-white shadow-sm` 
+                        : `${t.mutedText} ${t.accentTextHover}`
                     }`}
                   >
                     Личные
@@ -925,8 +1079,8 @@ export default function App() {
                     onClick={() => setActiveScope('work')}
                     className={`px-2 py-1 sm:px-3 sm:py-1.5 rounded-lg text-[11px] sm:text-xs font-semibold whitespace-nowrap transition-all ${
                       activeScope === 'work' 
-                        ? 'bg-[#6D9773] text-white shadow-sm' 
-                        : 'text-slate-500 hover:text-slate-700'
+                        ? `${t.subAccentBg} text-white shadow-sm` 
+                        : `${t.mutedText} ${t.accentTextHover}`
                     }`}
                   >
                     Рабочие
@@ -945,14 +1099,14 @@ export default function App() {
 
               {/* UNTIMED CHECKLIST (Tasks without assigned times) */}
               {unTimedTasks.length > 0 && (
-                <div className="bg-white rounded-2xl p-4 border border-[#6D9773]/15 shadow-sm">
+                <div className={`${t.cardBg} rounded-2xl p-4 border ${t.subAccentBorderLight} shadow-sm`}>
                   <div 
                     onClick={() => setIsDayTasksCollapsed(prev => !prev)}
-                    className="flex items-center justify-between cursor-pointer select-none pb-1.5 border-b border-[#6D9773]/10 group/day"
+                    className={`flex items-center justify-between cursor-pointer select-none pb-1.5 border-b ${t.subAccentBorderLight10} group/day`}
                   >
                     <div className="flex items-center gap-2">
-                      <span className="block text-[11px] font-bold text-[#0C3B2E] uppercase tracking-wider group-hover/day:underline decoration-2">Задачи на день:</span>
-                      <span className="text-[10px] text-[#6D9773] bg-[#6D9773]/10 font-bold px-2 py-0.5 rounded-full border border-[#6D9773]/15">
+                      <span className={`block text-[11px] font-bold ${t.accentText} uppercase tracking-wider group-hover/day:underline decoration-2`}>Задачи на день:</span>
+                      <span className={`text-[10px] ${t.subAccentText} ${t.subAccentBgLight} font-bold px-2 py-0.5 rounded-full border ${t.subAccentBorderLight}`}>
                         {unTimedTasks.length}
                       </span>
                     </div>
@@ -1039,14 +1193,14 @@ export default function App() {
               )}
 
               {/* TIMELINE CONTAINER */}
-              <div className="bg-white rounded-2xl p-4 border border-[#6D9773]/15 shadow-sm transition-all pb-5">
+              <div className={`${t.cardBg} rounded-2xl p-4 border ${t.subAccentBorderLight} shadow-sm transition-all pb-5`}>
                 <div 
                   onClick={() => setIsScheduleCollapsed(prev => !prev)}
-                  className="flex items-center justify-between cursor-pointer select-none pb-1.5 border-b border-[#6D9773]/10 group/sched mb-4"
+                  className={`flex items-center justify-between cursor-pointer select-none pb-1.5 border-b ${t.subAccentBorderLight10} group/sched mb-4`}
                 >
                   <div className="flex items-center gap-2">
-                    <span className="block text-[11px] font-bold text-[#0C3B2E] uppercase tracking-wider group-hover/sched:underline decoration-2">Расписание:</span>
-                    <span className="text-[10px] text-[#6D9773] bg-[#6D9773]/10 font-bold px-2 py-0.5 rounded-full border border-[#6D9773]/15">
+                    <span className={`block text-[11px] font-bold ${t.accentText} uppercase tracking-wider group-hover/sched:underline decoration-2`}>Расписание:</span>
+                    <span className={`text-[10px] ${t.subAccentText} ${t.subAccentBgLight} font-bold px-2 py-0.5 rounded-full border ${t.subAccentBorderLight}`}>
                       {timedTasks.length}
                     </span>
                   </div>
@@ -1067,10 +1221,10 @@ export default function App() {
                   <>
                     {timedTasks.length === 0 ? (
                       <div className="text-center py-8">
-                        <p className="text-slate-400 text-sm font-medium">Нет запланированных по времени задач на этот день.</p>
+                        <p className={`${t.mutedText} text-sm font-medium`}>Нет запланированных по времени задач на этот день.</p>
                         <button
                           onClick={handleAddTaskClick}
-                          className="mt-3 text-xs text-[#6D9773] font-bold hover:underline"
+                          className={`mt-3 text-xs ${t.subAccentText} font-bold hover:underline`}
                         >
                           + Создать первую задачу
                         </button>
@@ -1224,16 +1378,13 @@ export default function App() {
               orderedSomedayCategoryNames={orderedSomedayCategoryNames}
               collapsedSomeday={collapsedSomeday}
               onToggleCollapse={(catName) => setCollapsedSomeday(prev => ({ ...prev, [catName]: !prev[catName] }))}
-              onAddTask={(catName) => {
-                if (typeof catName === 'string' && catName) {
-                  handleAddSomedayClick(catName);
-                } else {
-                  setDefaultWishlistCategory(undefined);
-                  setDefaultSomedayCategory(undefined);
-                  setEditingTask(null);
-                  setIsTaskFormOpen(true);
-                }
+              onAddTask={() => {
+                setDefaultWishlistCategory(undefined);
+                setDefaultSomedayCategory(undefined);
+                setEditingTask(null);
+                setIsTaskFormOpen(true);
               }}
+              onQuickAdd={handleQuickAddSomeday}
               onEditTask={(task) => {
                 setEditingTask(task);
                 setIsTaskFormOpen(true);
@@ -1260,6 +1411,7 @@ export default function App() {
                 setEditingTask(null);
                 setIsTaskFormOpen(true);
               }}
+              onQuickAdd={handleQuickAddWishlist}
               onEditTask={(task) => {
                 setEditingTask(task);
                 setIsTaskFormOpen(true);
@@ -1286,6 +1438,7 @@ export default function App() {
                 setEditingTask(null);
                 setIsTaskFormOpen(true);
               }}
+              onQuickAdd={handleQuickAddGift}
               onEditTask={(task) => {
                 setEditingTask(task);
                 setIsTaskFormOpen(true);
