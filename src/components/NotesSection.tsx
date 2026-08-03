@@ -40,19 +40,6 @@ const themeStylesMap: Record<ThemeId, ThemeStyles> = {
     subtextColor: 'text-[#50685B]',
     borderColor: 'border-black/5'
   },
-  forestDark: {
-    outerBg: 'bg-[#0C3B2E]',
-    cardBg: 'bg-[#134A3A]/90',
-    cardHoverBg: 'hover:bg-[#1A5543]',
-    plusBtnBg: 'bg-[#134A3A]/90',
-    plusBtnHoverBg: 'hover:bg-[#1A5543]',
-    plusBtnText: 'text-[#C9A227]',
-    headerIconBg: 'bg-[#C9A227]',
-    headerIconColor: 'text-[#042018]',
-    textColor: 'text-[#E8F0EA]',
-    subtextColor: 'text-emerald-100/60',
-    borderColor: 'border-white/5'
-  },
   autumn: {
     outerBg: 'bg-[#EDE4DB]',
     cardBg: 'bg-[#FDF9F6]/90',

@@ -12,6 +12,7 @@ import {
   handleImageUpload,
   formatDatePillRu,
 } from './formHelpers';
+import { ThemeId, getDefaultTaskColor } from '../../utils/themeTypes';
 
 interface DailyTaskFormProps {
   isOpen: boolean;
@@ -19,6 +20,7 @@ interface DailyTaskFormProps {
   onSubmit: (task: FormSubmitPayload) => void;
   initialTask?: Task | null;
   defaultDate?: string;
+  theme?: ThemeId;
   onZoomImage?: (imgUrl: string) => void;
 }
 
@@ -109,8 +111,10 @@ export default function DailyTaskForm({
   onSubmit,
   initialTask,
   defaultDate,
+  theme = 'standard',
   onZoomImage,
 }: DailyTaskFormProps) {
+  const themeDefaultColor = getDefaultTaskColor(theme);
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState<TaskCategory>('task');
   const [scope, setScope] = useState<TaskScope>('personal');
@@ -126,7 +130,7 @@ export default function DailyTaskForm({
   const [showRecurrence, setShowRecurrence] = useState(false);
   const [showMorePatterns, setShowMorePatterns] = useState(false);
   const [notes, setNotes] = useState('');
-  const [color, setColor] = useState('blue');
+  const [color, setColor] = useState(themeDefaultColor);
   const [image, setImage] = useState<string | undefined>(undefined);
 
   useEffect(() => {
@@ -164,7 +168,7 @@ export default function DailyTaskForm({
         initialPattern === 'monthly' || initialPattern === 'yearly' || initialPattern === 'custom'
       );
       setNotes(initialTask.notes || '');
-      setColor(initialTask.color || 'blue');
+      setColor(initialTask.color || themeDefaultColor);
       setImage(initialTask.image || undefined);
     } else {
       setTitle('');
@@ -184,10 +188,10 @@ export default function DailyTaskForm({
       setShowRecurrence(false);
       setShowMorePatterns(false);
       setNotes('');
-      setColor('blue');
+      setColor(themeDefaultColor);
       setImage(undefined);
     }
-  }, [initialTask, defaultDate, isOpen]);
+  }, [initialTask, defaultDate, isOpen, themeDefaultColor]);
 
   const syncEndDateTimeFromStart = (startDateStr: string, startTimeStr: string, durationMins: number) => {
     if (!startDateStr || !startTimeStr) return;

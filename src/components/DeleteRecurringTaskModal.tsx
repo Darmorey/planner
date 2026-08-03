@@ -38,17 +38,6 @@ const themeStylesMap: Record<ThemeId, MiniThemeStyles> = {
     mutedText: 'text-slate-500',
     closeBtn: 'text-slate-400 hover:text-slate-600 hover:bg-slate-100',
   },
-  forestDark: {
-    headerText: 'text-[#E8F0EA]',
-    iconBg: 'bg-[#134A3A]',
-    iconColor: 'text-[#C9A227]',
-    buttonCurrentBg: 'bg-[#6D9773]/20 text-[#E8F0EA] border-[#6D9773]/35 hover:bg-[#6D9773]/30',
-    buttonAllBg: 'bg-[#C9A227] text-[#042018] hover:bg-[#B89220] shadow-sm shadow-black/20',
-    modalBg: 'bg-[#0C3B2E]',
-    bodyText: 'text-emerald-50/90',
-    mutedText: 'text-emerald-100/55',
-    closeBtn: 'text-emerald-100/50 hover:text-[#E8F0EA] hover:bg-white/5',
-  },
   autumn: {
     headerText: 'text-[#5C4033]',
     iconBg: 'bg-[#EDE4DB]',

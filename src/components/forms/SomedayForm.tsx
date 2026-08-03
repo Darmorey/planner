@@ -13,6 +13,7 @@ import {
   getSystemEndTimeStr,
   handleImageUpload,
 } from './formHelpers';
+import { ThemeId, getDefaultTaskColor } from '../../utils/themeTypes';
 
 interface SomedayFormProps {
   isOpen: boolean;
@@ -21,6 +22,7 @@ interface SomedayFormProps {
   initialTask?: Task | null;
   defaultDate?: string;
   defaultSomedayCategory?: string;
+  theme?: ThemeId;
   onZoomImage?: (imgUrl: string) => void;
 }
 
@@ -31,8 +33,10 @@ export default function SomedayForm({
   initialTask,
   defaultDate,
   defaultSomedayCategory,
+  theme = 'standard',
   onZoomImage,
 }: SomedayFormProps) {
+  const themeDefaultColor = getDefaultTaskColor(theme);
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState<TaskCategory>('task');
   const [scope, setScope] = useState<TaskScope>('personal');
@@ -59,7 +63,7 @@ export default function SomedayForm({
       } catch (e) {}
     }
     return [
-      { name: 'Идеи', color: 'blue' },
+      { name: 'Идеи', color: 'green' },
       { name: 'Планы', color: 'purple' },
       { name: 'Покупки', color: 'orange' },
       { name: 'Разное', color: 'dark' },
@@ -67,7 +71,7 @@ export default function SomedayForm({
   });
   const [selectedSomedayCategory, setSelectedSomedayCategory] = useState<string>('Разное');
   const [newSomedayCatName, setNewSomedayCatName] = useState('');
-  const [newSomedayCatColor, setNewSomedayCatColor] = useState('blue');
+  const [newSomedayCatColor, setNewSomedayCatColor] = useState(themeDefaultColor);
   const [isAddingSomedayCat, setIsAddingSomedayCat] = useState(false);
   const [isSomedayDropdownOpen, setIsSomedayDropdownOpen] = useState(false);
 
@@ -288,7 +292,7 @@ export default function SomedayForm({
     };
 
     const catObj = somedayCategories.find(c => c.name === selectedSomedayCategory);
-    const finalColor = catObj ? catObj.color : 'blue';
+    const finalColor = catObj ? catObj.color : themeDefaultColor;
 
     const isActuallySomeday = !hasDate;
 
@@ -474,7 +478,10 @@ export default function SomedayForm({
             {!isAddingSomedayCat ? (
               <button
                 type="button"
-                onClick={() => setIsAddingSomedayCat(true)}
+                onClick={() => {
+                  setNewSomedayCatColor(themeDefaultColor);
+                  setIsAddingSomedayCat(true);
+                }}
                 className="flex items-center gap-1.5 text-[11px] font-bold text-sky-600 hover:text-sky-700 transition-colors uppercase tracking-wider bg-sky-50 hover:bg-sky-100 px-3 py-1.5 rounded-xl border border-sky-100/50 cursor-pointer"
               >
                 <Plus size={12} />

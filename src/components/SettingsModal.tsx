@@ -13,7 +13,6 @@ interface SettingsModalProps {
 
 const themesList = [
   { id: 'standard', name: 'Лес', preview: 'bg-[#0C3B2E]', accent: 'bg-[#6D9773]' },
-  { id: 'forestDark', name: 'Ночной лес', preview: 'bg-[#042018]', accent: 'bg-[#C9A227]' },
   { id: 'autumn', name: 'Песок', preview: 'bg-[#5C4033]', accent: 'bg-[#A67C5D]' },
   { id: 'gray', name: 'Камень', preview: 'bg-[#3F3F46]', accent: 'bg-[#71717A]' },
   { id: 'bright', name: 'Лаванда', preview: 'bg-[#3D3A5C]', accent: 'bg-[#7B74A8]' },

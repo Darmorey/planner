@@ -2,12 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Task } from '../types';
 import { doesTaskOccurOnDate, parseLocalDate, formatLocalDate } from '../utils/taskHelpers';
+import { ThemeId, getDefaultTaskColor, isThemeId } from '../utils/themeTypes';
 
 interface MonthCalendarProps {
   selectedDate: string;
   onSelectDate: (date: string, keepOpen?: boolean) => void;
   tasks: Task[];
-  theme?: any;
+  theme?: { id?: ThemeId } | ThemeId | any;
   fullWidth?: boolean;
 }
 
@@ -59,6 +60,7 @@ interface DayColumnProps {
   cAccentText: string;
   cSubAccentBgLight: string;
   compact?: boolean;
+  defaultTaskColor?: string;
 }
 
 const DayColumn: React.FC<DayColumnProps> = ({
@@ -73,6 +75,7 @@ const DayColumn: React.FC<DayColumnProps> = ({
   cAccentText,
   cSubAccentBgLight,
   compact = false,
+  defaultTaskColor = 'blue',
 }) => {
   const visibleTasks = dayTasks.slice(0, MAX_VISIBLE_TASKS);
   const overflowCount = dayTasks.length - MAX_VISIBLE_TASKS;
@@ -106,7 +109,7 @@ const DayColumn: React.FC<DayColumnProps> = ({
             key={task.id}
             className={`truncate rounded-md px-1 py-0.5 font-medium leading-tight ${
               compact ? 'text-[9px]' : 'text-[10px]'
-            } ${getPillStyle(task.color || 'blue')}`}
+            } ${getPillStyle(task.color || defaultTaskColor)}`}
             title={task.time ? `${task.time} — ${task.title}` : task.title}
           >
             {task.title}
@@ -275,6 +278,8 @@ export default function MonthCalendar({
 
   const cAccentText = t ? t.accentText : 'text-[#2C4A52]';
   const cAccentBg = t ? t.accentBg : 'bg-[#2C4A52]';
+  const themeId: ThemeId = isThemeId(t?.id) ? t.id : 'standard';
+  const defaultTaskColor = getDefaultTaskColor(themeId);
   const cAccentBorderSolid = t ? t.accentBorderSolid : 'border-[#2C4A52]';
   const cSubAccentBgLight = t ? t.subAccentBgLight : 'bg-[#6398A9]/10';
   const cSubAccentBorderLight = t ? t.subAccentBorderLight : 'border-[#6398A9]/15';
@@ -358,6 +363,7 @@ export default function MonthCalendar({
                 cAccentBg={cAccentBg}
                 cAccentText={cAccentText}
                 cSubAccentBgLight={cSubAccentBgLight}
+                defaultTaskColor={defaultTaskColor}
               />
             ))}
           </div>
@@ -391,6 +397,7 @@ export default function MonthCalendar({
                     cAccentBg={cAccentBg}
                     cAccentText={cAccentText}
                     cSubAccentBgLight={cSubAccentBgLight}
+                    defaultTaskColor={defaultTaskColor}
                   />
                 ))}
               </div>

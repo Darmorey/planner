@@ -1,4 +1,5 @@
 import { Task } from '../types';
+import { ThemeId } from '../utils/themeTypes';
 import WishlistForm from './forms/WishlistForm';
 import GiftForm from './forms/GiftForm';
 import SomedayForm from './forms/SomedayForm';
@@ -17,6 +18,7 @@ interface TaskFormProps {
   defaultGiftRecipient?: string;
   defaultWishlistCategory?: string;
   defaultSomedayCategory?: string;
+  theme?: ThemeId;
   onZoomImage?: (imgUrl: string) => void;
 }
 
@@ -32,6 +34,7 @@ export default function TaskForm({
   defaultGiftRecipient,
   defaultWishlistCategory,
   defaultSomedayCategory,
+  theme = 'standard',
   onZoomImage,
 }: TaskFormProps) {
   // Mode must come from initialTask when editing (same logic as the former useEffect)
@@ -49,6 +52,7 @@ export default function TaskForm({
         onSubmit={onSubmit}
         initialTask={initialTask}
         defaultWishlistCategory={defaultWishlistCategory}
+        theme={theme}
         onZoomImage={onZoomImage}
       />
     );
@@ -62,6 +66,7 @@ export default function TaskForm({
         onSubmit={onSubmit}
         initialTask={initialTask}
         defaultGiftRecipient={defaultGiftRecipient}
+        theme={theme}
         onZoomImage={onZoomImage}
       />
     );
@@ -76,6 +81,7 @@ export default function TaskForm({
         initialTask={initialTask}
         defaultDate={defaultDate}
         defaultSomedayCategory={defaultSomedayCategory}
+        theme={theme}
         onZoomImage={onZoomImage}
       />
     );
@@ -88,6 +94,7 @@ export default function TaskForm({
       onSubmit={onSubmit}
       initialTask={initialTask}
       defaultDate={defaultDate}
+      theme={theme}
       onZoomImage={onZoomImage}
     />
   );

@@ -26,7 +26,7 @@ import SomedayTab from './components/SomedayTab';
 import WishlistTab from './components/WishlistTab';
 import GiftsTab from './components/GiftsTab';
 
-import { ThemeId, isThemeId } from './utils/themeTypes';
+import { ThemeId, isThemeId, getDefaultTaskColor } from './utils/themeTypes';
 
 interface ThemeConfig {
   id: ThemeId;
@@ -89,36 +89,6 @@ const THEMES: Record<ThemeId, ThemeConfig> = {
     subAccentHover: 'hover:bg-[#58825e]',
     subAccentText: 'text-[#6D9773]',
     selectionClasses: 'selection:bg-[#6D9773]/30 selection:text-[#0C3B2E]'
-  },
-  forestDark: {
-    id: 'forestDark',
-    name: 'Ночной лес',
-    isDark: true,
-    bodyBg: 'bg-[#042018]',
-    appBg: 'bg-[#0A2820]',
-    contentBg: 'bg-[#051F19]',
-    cardBg: 'bg-[#0C3B2E]',
-    chipBg: 'bg-[#134A3A]',
-    chipBorder: 'border-white/10',
-    mutedText: 'text-emerald-100/55',
-    mutedHover: 'hover:text-[#E8F0EA] hover:bg-white/5',
-    headerBg: 'bg-[#0C3B2E]',
-    headerGradientFrom: '#1A4D3E',
-    headerGradientTo: '#0C3B2E',
-    accentText: 'text-[#E8F0EA]',
-    accentTextHover: 'hover:text-white',
-    accentBorder: 'border-white/10',
-    accentBorderSolid: 'border-[#6D9773]',
-    accentBg: 'bg-[#6D9773]',
-    accentBgHover: 'hover:bg-[#58825e]',
-    subAccentBgLight: 'bg-[#6D9773]/15',
-    subAccentBgLight5: 'bg-[#6D9773]/10',
-    subAccentBorderLight: 'border-[#6D9773]/25',
-    subAccentBorderLight10: 'border-[#6D9773]/15',
-    subAccentBg: 'bg-[#6D9773]',
-    subAccentHover: 'hover:bg-[#7DAB83]',
-    subAccentText: 'text-[#A7C4AA]',
-    selectionClasses: 'selection:bg-[#6D9773]/40 selection:text-white'
   },
   autumn: {
     id: 'autumn',
@@ -607,7 +577,7 @@ export default function App() {
       completed: false,
       recurrence: { pattern: 'none' },
       somedayCategory: categoryName,
-      color: catObj?.color || 'blue',
+      color: catObj?.color || getDefaultTaskColor(theme),
     };
     setTasks((prev) => [...prev, newTask]);
   };
@@ -623,7 +593,7 @@ export default function App() {
       recurrence: { pattern: 'none' },
       isWishlist: true,
       wishlistCategory: categoryName,
-      color: catObj?.color || 'red',
+      color: catObj?.color || getDefaultTaskColor(theme),
     };
     setTasks((prev) => [...prev, newTask]);
   };
@@ -639,7 +609,7 @@ export default function App() {
       recurrence: { pattern: 'none' },
       isGift: true,
       giftRecipient: recipientName,
-      color: recObj?.color || 'blue',
+      color: recObj?.color || getDefaultTaskColor(theme),
     };
     setTasks((prev) => [...prev, newTask]);
   };
@@ -713,7 +683,7 @@ export default function App() {
       } catch (e) {}
     }
     return [
-      { name: 'Идеи', color: 'blue' },
+      { name: 'Идеи', color: getDefaultTaskColor(theme) },
       { name: 'Планы', color: 'purple' },
       { name: 'Покупки', color: 'orange' },
       { name: 'Разное', color: 'dark' },
@@ -782,7 +752,7 @@ export default function App() {
       } catch (e) {}
     }
     return [
-      { name: 'Папа', color: 'blue' },
+      { name: 'Папа', color: getDefaultTaskColor(theme) },
       { name: 'Мама', color: 'red' },
       { name: 'Лёша', color: 'purple' },
       { name: 'Бабушка', color: 'green' },
@@ -1139,7 +1109,7 @@ export default function App() {
                             className={`flex items-center justify-between px-3.5 py-2 rounded-2xl transition-all border group cursor-pointer ${
                               isCompleted 
                                 ? 'bg-slate-50/30 border-slate-100 border-l-4 border-l-slate-300 text-slate-400 line-through opacity-80' 
-                                : `border-slate-100 border-l-4 hover:shadow-md ${getTaskBgClass(task.color || 'blue')} ${getTaskBorderLeftClass(task.color || 'blue')}`
+                                : `border-slate-100 border-l-4 hover:shadow-md ${getTaskBgClass(task.color || getDefaultTaskColor(theme))} ${getTaskBorderLeftClass(task.color || getDefaultTaskColor(theme))}`
                             }`}
                           >
                             <div className="flex items-center gap-3 flex-1 min-w-0 pr-2">
@@ -1242,7 +1212,7 @@ export default function App() {
                           if (isCompleted) {
                             boxColorClasses = 'bg-slate-50/30 border-slate-200 text-slate-400 scale-[0.99] opacity-80';
                           } else {
-                            const col = task.color || (isWork ? 'dark' : 'blue');
+                            const col = task.color || (isWork ? 'dark' : getDefaultTaskColor(theme));
                             boxColorClasses = `${getTaskBgClass(col)} border-black/5 hover:shadow-md`;
                           }
 
@@ -1470,6 +1440,7 @@ export default function App() {
         defaultGiftRecipient={defaultGiftRecipient}
         defaultWishlistCategory={defaultWishlistCategory}
         defaultSomedayCategory={defaultSomedayCategory}
+        theme={theme}
         onZoomImage={setZoomedImage}
       />
 

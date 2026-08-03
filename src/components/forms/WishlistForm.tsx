@@ -9,6 +9,7 @@ import {
   getStyleByColor,
   handleImageUpload,
 } from './formHelpers';
+import { ThemeId, getDefaultTaskColor } from '../../utils/themeTypes';
 
 interface WishlistFormProps {
   isOpen: boolean;
@@ -16,6 +17,7 @@ interface WishlistFormProps {
   onSubmit: (task: FormSubmitPayload) => void;
   initialTask?: Task | null;
   defaultWishlistCategory?: string;
+  theme?: ThemeId;
   onZoomImage?: (imgUrl: string) => void;
 }
 
@@ -25,8 +27,10 @@ export default function WishlistForm({
   onSubmit,
   initialTask,
   defaultWishlistCategory,
+  theme = 'standard',
   onZoomImage,
 }: WishlistFormProps) {
+  const themeDefaultColor = getDefaultTaskColor(theme);
   const [title, setTitle] = useState('');
   const [notes, setNotes] = useState('');
   const [image, setImage] = useState<string | undefined>(undefined);
@@ -48,7 +52,7 @@ export default function WishlistForm({
   });
   const [selectedWishlistCategory, setSelectedWishlistCategory] = useState<string>('Одежда');
   const [newCatName, setNewCatName] = useState('');
-  const [newCatColor, setNewCatColor] = useState('blue');
+  const [newCatColor, setNewCatColor] = useState(themeDefaultColor);
   const [isAddingWishlistCat, setIsAddingWishlistCat] = useState(false);
   const [isWishlistDropdownOpen, setIsWishlistDropdownOpen] = useState(false);
 
@@ -128,7 +132,7 @@ export default function WishlistForm({
     if (!title.trim()) return;
 
     const catObj = wishlistCategories.find(c => c.name === selectedWishlistCategory);
-    const finalColor = catObj ? catObj.color : 'blue';
+    const finalColor = catObj ? catObj.color : themeDefaultColor;
 
     onSubmit({
       id: initialTask?.id,
@@ -312,7 +316,10 @@ export default function WishlistForm({
             {!isAddingWishlistCat ? (
               <button
                 type="button"
-                onClick={() => setIsAddingWishlistCat(true)}
+                onClick={() => {
+                  setNewCatColor(themeDefaultColor);
+                  setIsAddingWishlistCat(true);
+                }}
                 className="flex items-center gap-1.5 text-[11px] font-bold text-sky-600 hover:text-sky-700 transition-colors uppercase tracking-wider bg-sky-50 hover:bg-sky-100 px-3 py-1.5 rounded-xl border border-sky-100/50 cursor-pointer"
               >
                 <Plus size={12} />

@@ -9,6 +9,7 @@ import {
   getStyleByColor,
   handleImageUpload,
 } from './formHelpers';
+import { ThemeId, getDefaultTaskColor } from '../../utils/themeTypes';
 
 interface GiftFormProps {
   isOpen: boolean;
@@ -16,6 +17,7 @@ interface GiftFormProps {
   onSubmit: (task: FormSubmitPayload) => void;
   initialTask?: Task | null;
   defaultGiftRecipient?: string;
+  theme?: ThemeId;
   onZoomImage?: (imgUrl: string) => void;
 }
 
@@ -25,8 +27,10 @@ export default function GiftForm({
   onSubmit,
   initialTask,
   defaultGiftRecipient,
+  theme = 'standard',
   onZoomImage,
 }: GiftFormProps) {
+  const themeDefaultColor = getDefaultTaskColor(theme);
   const [title, setTitle] = useState('');
   const [notes, setNotes] = useState('');
   const [image, setImage] = useState<string | undefined>(undefined);
@@ -41,7 +45,7 @@ export default function GiftForm({
       }
     }
     return [
-      { name: 'Папа', color: 'blue' },
+      { name: 'Папа', color: 'green' },
       { name: 'Мама', color: 'red' },
       { name: 'Лёша', color: 'purple' },
       { name: 'Бабушка', color: 'green' },
@@ -49,7 +53,7 @@ export default function GiftForm({
   });
   const [selectedGiftRecipient, setSelectedGiftRecipient] = useState<string>('Папа');
   const [newRecipientName, setNewRecipientName] = useState('');
-  const [newRecipientColor, setNewRecipientColor] = useState('blue');
+  const [newRecipientColor, setNewRecipientColor] = useState(themeDefaultColor);
   const [isAddingGiftRecipient, setIsAddingGiftRecipient] = useState(false);
   const [isGiftDropdownOpen, setIsGiftDropdownOpen] = useState(false);
 
@@ -129,7 +133,7 @@ export default function GiftForm({
     if (!title.trim()) return;
 
     const recObj = giftRecipients.find(r => r.name === selectedGiftRecipient);
-    const finalColor = recObj ? recObj.color : 'blue';
+    const finalColor = recObj ? recObj.color : themeDefaultColor;
 
     onSubmit({
       id: initialTask?.id,
@@ -313,7 +317,10 @@ export default function GiftForm({
             {!isAddingGiftRecipient ? (
               <button
                 type="button"
-                onClick={() => setIsAddingGiftRecipient(true)}
+                onClick={() => {
+                  setNewRecipientColor(themeDefaultColor);
+                  setIsAddingGiftRecipient(true);
+                }}
                 className="flex items-center gap-1.5 text-[11px] font-bold text-sky-600 hover:text-sky-700 transition-colors uppercase tracking-wider bg-sky-50 hover:bg-sky-100 px-3 py-1.5 rounded-xl border border-sky-100/50 cursor-pointer"
               >
                 <Plus size={12} />
