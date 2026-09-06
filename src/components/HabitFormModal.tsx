@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useLayoutEffect, useState } from 'react';
 import { X, Save } from 'lucide-react';
 import { Habit, HabitKind, HabitPeriod } from '../types';
 import { getDefaultTaskColor, ThemeId } from '../utils/themeTypes';
@@ -42,7 +42,7 @@ export default function HabitFormModal({
   const [period, setPeriod] = useState<HabitPeriod>('month');
   const [color, setColor] = useState(themeDefaultColor);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!isOpen) return;
     if (initialHabit) {
       setTitle(initialHabit.title);
@@ -98,7 +98,7 @@ export default function HabitFormModal({
               required
               value={title}
               onChange={e => setTitle(e.target.value)}
-              placeholder={kind === 'daily' ? '10 минут английского' : 'Посещать новое место'}
+              placeholder="Привычка..."
               className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-300/30 text-slate-900 font-semibold"
             />
           </div>

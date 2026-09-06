@@ -27,6 +27,7 @@ import WishlistTab from './components/WishlistTab';
 import GiftsTab from './components/GiftsTab';
 import HabitsTab from './components/HabitsTab';
 import HabitFormModal from './components/HabitFormModal';
+import { normalizeHabits } from './utils/habitHelpers';
 
 import { ThemeId, isThemeId, getDefaultTaskColor } from './utils/themeTypes';
 
@@ -228,7 +229,8 @@ export default function App() {
     if (!saved) return INITIAL_HABITS;
     try {
       const parsed = JSON.parse(saved);
-      return Array.isArray(parsed) ? parsed : INITIAL_HABITS;
+      const normalized = normalizeHabits(parsed);
+      return normalized.length > 0 || Array.isArray(parsed) ? normalized : INITIAL_HABITS;
     } catch {
       return INITIAL_HABITS;
     }

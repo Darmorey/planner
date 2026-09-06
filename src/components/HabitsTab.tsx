@@ -139,15 +139,26 @@ function PeriodicHabitCard({
 
   const [draft, setDraft] = useState(currentEntry?.text || '');
   const [historyOpen, setHistoryOpen] = useState(false);
+  const [savedFlash, setSavedFlash] = useState(false);
 
   useEffect(() => {
     setDraft(currentEntry?.text || '');
   }, [currentEntry?.text, periodKey]);
 
+  useEffect(() => {
+    if (!savedFlash) return;
+    const timer = window.setTimeout(() => setSavedFlash(false), 1500);
+    return () => window.clearTimeout(timer);
+  }, [savedFlash]);
+
+  const canSave = Boolean(draft.trim()) || Boolean(currentEntry?.text.trim());
+
   const handleSave = () => {
+    if (!canSave) return;
     const trimmed = draft.trim();
     if (!trimmed && !currentEntry) return;
     onSaveEntry(trimmed);
+    setSavedFlash(true);
   };
 
   const color = habit.color || 'green';
@@ -174,7 +185,13 @@ function PeriodicHabitCard({
         </div>
       </div>
 
-      <div className="rounded-xl bg-white/70 border border-black/5 p-3">
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          handleSave();
+        }}
+        className="rounded-xl bg-white/70 border border-black/5 p-3"
+      >
         <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-2">
           {periodLabel}
         </p>
@@ -187,13 +204,20 @@ function PeriodicHabitCard({
         />
         <button
           type="button"
-          onClick={handleSave}
-          disabled={!draft.trim()}
-          className="mt-2 px-3 py-1.5 rounded-lg bg-emerald-700 hover:bg-emerald-800 disabled:opacity-40 disabled:pointer-events-none text-white text-xs font-bold transition-colors"
+          onPointerDown={(e) => e.preventDefault()}
+          onClick={() => handleSave()}
+          aria-disabled={!canSave}
+          className={`mt-2 px-3 py-1.5 rounded-lg text-white text-xs font-bold transition-colors touch-manipulation ${
+            canSave
+              ? savedFlash
+                ? 'bg-emerald-600'
+                : 'bg-emerald-700 hover:bg-emerald-800 active:scale-[0.98]'
+              : 'bg-emerald-700/40 cursor-not-allowed'
+          }`}
         >
-          Сохранить
+          {savedFlash ? 'Сохранено' : 'Сохранить'}
         </button>
-      </div>
+      </form>
 
       {pastEntries.length > 0 && (
         <div className="mt-3">

@@ -1,4 +1,4 @@
-import { HabitPeriod } from '../types';
+import { Habit, HabitPeriod } from '../types';
 import { formatLocalDate, parseLocalDate } from './taskHelpers';
 
 const MONTHS_RU = [
@@ -69,4 +69,25 @@ export function getPeriodKindLabel(period: HabitPeriod): string {
 
 export function getWeekdayShortLabels(): string[] {
   return WEEKDAY_SHORT;
+}
+
+export function normalizeHabits(raw: unknown): Habit[] {
+  if (!Array.isArray(raw)) return [];
+  return raw.map((item) => {
+    const h = item as Habit;
+    if (h.kind === 'periodic') {
+      return {
+        ...h,
+        period: h.period || 'month',
+        entries: Array.isArray(h.entries) ? h.entries : [],
+      };
+    }
+    if (h.kind === 'daily') {
+      return {
+        ...h,
+        completedDates: Array.isArray(h.completedDates) ? h.completedDates : [],
+      };
+    }
+    return h;
+  });
 }
