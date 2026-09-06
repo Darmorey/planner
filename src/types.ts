@@ -40,3 +40,26 @@ export interface DayNote {
   content: string;
   createdAt: number;
 }
+
+export type HabitKind = 'daily' | 'periodic';
+export type HabitPeriod = 'week' | 'month' | 'year';
+
+export interface HabitPeriodEntry {
+  periodKey: string;
+  text: string;
+  createdAt: number;
+}
+
+export interface Habit {
+  id: string;
+  title: string;
+  kind: HabitKind;
+  /** For periodic habits only */
+  period?: HabitPeriod;
+  color?: string;
+  /** Daily habits: YYYY-MM-DD strings when completed */
+  completedDates?: string[];
+  /** Periodic habits: one entry per period */
+  entries?: HabitPeriodEntry[];
+  createdAt: number;
+}

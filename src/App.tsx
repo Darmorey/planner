@@ -3,11 +3,11 @@ import { motion, AnimatePresence } from 'motion/react';
 import { 
   Plus, Calendar as CalendarIcon, Check, ListTodo, Gift, 
   ExternalLink, LogIn, RefreshCw, Eye, EyeOff, LayoutGrid, Clock,
-  MapPin, ChevronLeft, ChevronRight, ChevronDown, CheckCircle2, Circle, Trash2, Edit2, Bookmark, Heart, FileText, Sparkles, Settings, X
+  MapPin, ChevronLeft, ChevronRight, ChevronDown, CheckCircle2, Circle, Trash2, Edit2, Bookmark, Heart, FileText, Sparkles, Settings, X, Repeat
 } from 'lucide-react';
-import { Task, DayNote } from './types';
+import { Task, DayNote, Habit } from './types';
 import { doesTaskOccurOnDate, calculateFreeTime, getDaysDifference, parseLocalDate, formatLocalDate, compareTasksByTime, calculateEndTime, isTaskCompletedOnDate } from './utils/taskHelpers';
-import { INITIAL_TASKS, INITIAL_NOTES } from './utils/initialData';
+import { INITIAL_TASKS, INITIAL_NOTES, INITIAL_HABITS } from './utils/initialData';
 import MonthCalendar from './components/MonthCalendar';
 import TaskForm from './components/TaskForm';
 import SettingsModal from './components/SettingsModal';
@@ -25,6 +25,8 @@ import {
 import SomedayTab from './components/SomedayTab';
 import WishlistTab from './components/WishlistTab';
 import GiftsTab from './components/GiftsTab';
+import HabitsTab from './components/HabitsTab';
+import HabitFormModal from './components/HabitFormModal';
 
 import { ThemeId, isThemeId, getDefaultTaskColor } from './utils/themeTypes';
 
@@ -221,6 +223,17 @@ export default function App() {
     }
   });
 
+  const [habits, setHabits] = useState<Habit[]>(() => {
+    const saved = localStorage.getItem('planner_habits');
+    if (!saved) return INITIAL_HABITS;
+    try {
+      const parsed = JSON.parse(saved);
+      return Array.isArray(parsed) ? parsed : INITIAL_HABITS;
+    } catch {
+      return INITIAL_HABITS;
+    }
+  });
+
   const [isNotesStorageOpen, setIsNotesStorageOpen] = useState(false);
   const [isNoteEditOpen, setIsNoteEditOpen] = useState(false);
   const [editingNote, setEditingNote] = useState<DayNote | null>(null);
@@ -230,7 +243,7 @@ export default function App() {
   const [slideDirection, setSlideDirection] = useState<'left' | 'right'>('left');
   const [showFullCalendar, setShowFullCalendar] = useState(false);
   const [hideCompleted, setHideCompleted] = useState(false);
-  const [currentTab, setCurrentTab] = useState<'daily' | 'someday' | 'wishlist' | 'gifts'>('daily');
+  const [currentTab, setCurrentTab] = useState<'daily' | 'someday' | 'wishlist' | 'gifts' | 'habits'>('daily');
   const [activeScope, setActiveScope] = useState<'all' | 'personal' | 'work'>('all');
 
   // Modal control
@@ -260,6 +273,10 @@ export default function App() {
   // State for deleting recurring tasks
   const [deletingRecurringTask, setDeletingRecurringTask] = useState<{ taskId: string; dateStr: string; taskTitle: string } | null>(null);
 
+  const [isHabitFormOpen, setIsHabitFormOpen] = useState(false);
+  const [editingHabit, setEditingHabit] = useState<Habit | null>(null);
+  const [defaultHabitKind, setDefaultHabitKind] = useState<'daily' | 'periodic'>('daily');
+
   const handleClearAllData = () => {
     if (!isConfirmingClear) {
       setIsConfirmingClear(true);
@@ -272,6 +289,7 @@ export default function App() {
       setIsConfirmingClear(false);
       setTasks([]);
       setNotes([]);
+      setHabits([]);
       localStorage.removeItem('planner_tasks');
       localStorage.removeItem('planner_notes');
     }
@@ -338,6 +356,10 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem('planner_notes', JSON.stringify(notes));
   }, [notes]);
+
+  useEffect(() => {
+    localStorage.setItem('planner_habits', JSON.stringify(habits));
+  }, [habits]);
 
   // --- OVERDUE UNTIMED TASKS ROLLOVER ---
   useEffect(() => {
@@ -647,6 +669,82 @@ export default function App() {
     }
   };
 
+  const handleSaveHabit = (data: {
+    id?: string;
+    title: string;
+    kind: Habit['kind'];
+    period?: Habit['period'];
+    color?: string;
+  }) => {
+    if (data.id) {
+      setHabits(prev => prev.map(h => h.id === data.id ? {
+        ...h,
+        title: data.title,
+        kind: data.kind,
+        period: data.kind === 'periodic' ? data.period : undefined,
+        color: data.color,
+      } : h));
+    } else {
+      const newHabit: Habit = {
+        id: `habit-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        title: data.title,
+        kind: data.kind,
+        period: data.kind === 'periodic' ? (data.period || 'month') : undefined,
+        color: data.color || getDefaultTaskColor(theme),
+        completedDates: data.kind === 'daily' ? [] : undefined,
+        entries: data.kind === 'periodic' ? [] : undefined,
+        createdAt: Date.now(),
+      };
+      setHabits(prev => [...prev, newHabit]);
+    }
+  };
+
+  const handleDeleteHabit = (id: string) => {
+    setHabits(prev => prev.filter(h => h.id !== id));
+    if (editingHabit?.id === id) {
+      setEditingHabit(null);
+      setIsHabitFormOpen(false);
+    }
+  };
+
+  const handleToggleDailyHabit = (habitId: string, dateStr: string) => {
+    setHabits(prev => prev.map(h => {
+      if (h.id !== habitId || h.kind !== 'daily') return h;
+      const dates = h.completedDates || [];
+      const has = dates.includes(dateStr);
+      return {
+        ...h,
+        completedDates: has
+          ? dates.filter(d => d !== dateStr)
+          : [...dates, dateStr],
+      };
+    }));
+  };
+
+  const handleSavePeriodicEntry = (habitId: string, periodKey: string, text: string) => {
+    setHabits(prev => prev.map(h => {
+      if (h.id !== habitId || h.kind !== 'periodic') return h;
+      const entries = h.entries || [];
+      const trimmed = text.trim();
+      if (!trimmed) {
+        return { ...h, entries: entries.filter(e => e.periodKey !== periodKey) };
+      }
+      const existing = entries.find(e => e.periodKey === periodKey);
+      if (existing) {
+        return {
+          ...h,
+          entries: entries.map(e =>
+            e.periodKey === periodKey ? { ...e, text: trimmed } : e
+          ),
+        };
+      }
+      return {
+        ...h,
+        entries: [...entries, { periodKey, text: trimmed, createdAt: Date.now() }],
+      };
+    }));
+  };
+
   // --- FILTERING TASKS FOR THE DAY ---
   // Get active scheduled tasks for selectedDate
   const allScheduledTasksOpenAndClosed = tasks.filter(task => 
@@ -951,7 +1049,7 @@ export default function App() {
         </div>
 
         {/* PERSISTENT MAIN NAVIGATION TABS */}
-        <div className={`grid grid-cols-4 border-b ${t.subAccentBorderLight} text-center text-[10px] xs:text-[11px] sm:text-xs md:text-sm font-medium ${t.mutedText} ${t.cardBg} shadow-sm z-10`}>
+        <div className={`grid grid-cols-5 border-b ${t.subAccentBorderLight} text-center text-[9px] xs:text-[10px] sm:text-xs font-medium ${t.mutedText} ${t.cardBg} shadow-sm z-10`}>
           <button
             onClick={() => setCurrentTab('daily')}
             className={`py-3.5 border-b-2 transition-all flex items-center justify-center gap-1.2 sm:gap-1.5 ${
@@ -998,6 +1096,18 @@ export default function App() {
           >
             <Gift size={15} className="text-yellow-600" />
             <span className="truncate">Подарки</span>
+          </button>
+
+          <button
+            onClick={() => setCurrentTab('habits')}
+            className={`py-3.5 border-b-2 transition-all flex items-center justify-center gap-1 sm:gap-1.5 ${
+              currentTab === 'habits' 
+                ? `${t.accentBorderSolid} ${t.accentText} font-semibold ${t.subAccentBgLight5}` 
+                : `border-transparent ${t.mutedHover}`
+            }`}
+          >
+            <Repeat size={15} />
+            <span className="truncate">Привычки</span>
           </button>
         </div>
 
@@ -1420,8 +1530,53 @@ export default function App() {
               accentBgHover={t.accentBgHover}
             />
           )}
+
+          {currentTab === 'habits' && (
+            <HabitsTab
+              habits={habits}
+              selectedDate={selectedDate}
+              cardBg={t.cardBg}
+              subAccentBorderLight={t.subAccentBorderLight}
+              subAccentBorderLight10={t.subAccentBorderLight10}
+              subAccentBgLight={t.subAccentBgLight}
+              subAccentText={t.subAccentText}
+              accentText={t.accentText}
+              accentBg={t.accentBg}
+              accentBgHover={t.accentBgHover}
+              onAddDaily={() => {
+                setEditingHabit(null);
+                setDefaultHabitKind('daily');
+                setIsHabitFormOpen(true);
+              }}
+              onAddPeriodic={() => {
+                setEditingHabit(null);
+                setDefaultHabitKind('periodic');
+                setIsHabitFormOpen(true);
+              }}
+              onEditHabit={(habit) => {
+                setEditingHabit(habit);
+                setDefaultHabitKind(habit.kind);
+                setIsHabitFormOpen(true);
+              }}
+              onDeleteHabit={handleDeleteHabit}
+              onToggleDaily={handleToggleDailyHabit}
+              onSavePeriodicEntry={handleSavePeriodicEntry}
+            />
+          )}
         </div>
       </div>  
+
+      <HabitFormModal
+        isOpen={isHabitFormOpen}
+        onClose={() => {
+          setIsHabitFormOpen(false);
+          setEditingHabit(null);
+        }}
+        onSave={handleSaveHabit}
+        initialHabit={editingHabit}
+        defaultKind={defaultHabitKind}
+        theme={theme}
+      />
 
       {/* DETAILED DIALOG MODALS */}
       <TaskForm
