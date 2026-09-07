@@ -132,6 +132,20 @@ export function compareTasksByTime(a: Task, b: Task, dateStr?: string): number {
   return timeA.localeCompare(timeB);
 }
 
+/** Apply saved drag order; unknown tasks fall back to title sort at the end. */
+export function sortTasksByCustomOrder(tasks: Task[], orderIds: string[]): Task[] {
+  if (!orderIds.length) {
+    return [...tasks].sort((a, b) => a.title.localeCompare(b.title, 'ru'));
+  }
+  const rank = new Map(orderIds.map((id, index) => [id, index]));
+  return [...tasks].sort((a, b) => {
+    const rankA = rank.has(a.id) ? rank.get(a.id)! : Number.MAX_SAFE_INTEGER;
+    const rankB = rank.has(b.id) ? rank.get(b.id)! : Number.MAX_SAFE_INTEGER;
+    if (rankA !== rankB) return rankA - rankB;
+    return a.title.localeCompare(b.title, 'ru');
+  });
+}
+
 export function isTaskCompletedOnDate(task: Task, dateStr: string): boolean {
   if (task.recurrence && task.recurrence.pattern !== 'none') {
     return task.completedDates?.includes(dateStr) || false;

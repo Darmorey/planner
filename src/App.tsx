@@ -6,7 +6,7 @@ import {
   MapPin, ChevronLeft, ChevronRight, ChevronDown, CheckCircle2, Circle, Trash2, Edit2, Bookmark, Heart, FileText, Sparkles, Settings, X, Repeat
 } from 'lucide-react';
 import { Task, DayNote, Habit } from './types';
-import { doesTaskOccurOnDate, calculateFreeTime, getDaysDifference, parseLocalDate, formatLocalDate, compareTasksByTime, calculateEndTime, isTaskCompletedOnDate } from './utils/taskHelpers';
+import { doesTaskOccurOnDate, calculateFreeTime, getDaysDifference, parseLocalDate, formatLocalDate, compareTasksByTime, calculateEndTime, isTaskCompletedOnDate, sortTasksByCustomOrder } from './utils/taskHelpers';
 import { INITIAL_TASKS, INITIAL_NOTES, INITIAL_HABITS } from './utils/initialData';
 import MonthCalendar from './components/MonthCalendar';
 import TaskForm from './components/TaskForm';
@@ -27,6 +27,7 @@ import WishlistTab from './components/WishlistTab';
 import GiftsTab from './components/GiftsTab';
 import HabitsTab from './components/HabitsTab';
 import HabitFormModal from './components/HabitFormModal';
+import DayTaskList from './components/DayTaskList';
 import { normalizeHabits } from './utils/habitHelpers';
 
 import { ThemeId, isThemeId, getDefaultTaskColor } from './utils/themeTypes';
@@ -279,6 +280,15 @@ export default function App() {
   const [editingHabit, setEditingHabit] = useState<Habit | null>(null);
   const [defaultHabitKind, setDefaultHabitKind] = useState<'daily' | 'periodic'>('daily');
 
+  const [dayTaskOrders, setDayTaskOrders] = useState<Record<string, string[]>>(() => {
+    try {
+      const saved = localStorage.getItem('planner_day_task_order');
+      return saved ? JSON.parse(saved) : {};
+    } catch {
+      return {};
+    }
+  });
+
   const handleClearAllData = () => {
     if (!isConfirmingClear) {
       setIsConfirmingClear(true);
@@ -362,6 +372,10 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem('planner_habits', JSON.stringify(habits));
   }, [habits]);
+
+  useEffect(() => {
+    localStorage.setItem('planner_day_task_order', JSON.stringify(dayTaskOrders));
+  }, [dayTaskOrders]);
 
   // --- OVERDUE UNTIMED TASKS ROLLOVER ---
   useEffect(() => {
@@ -763,13 +777,23 @@ export default function App() {
   });
 
   // Checklist items: all tasks for the day (both timed and untimed)
-  const unTimedTasks = filteredScheduledTasks
-    .sort((a, b) => a.title.localeCompare(b.title));
+  const dayTaskOrderKey = `${selectedDate}|${activeScope}`;
+  const unTimedTasks = sortTasksByCustomOrder(
+    filteredScheduledTasks,
+    dayTaskOrders[dayTaskOrderKey] || []
+  );
 
   // Timed tasks for schedule vertical timeline
   const timedTasks = filteredScheduledTasks
     .filter(task => !!task.time)
     .sort((a, b) => compareTasksByTime(a, b, selectedDate));
+
+  const handleReorderDayTasks = (ordered: Task[]) => {
+    setDayTaskOrders(prev => ({
+      ...prev,
+      [dayTaskOrderKey]: ordered.map(t => t.id),
+    }));
+  };
 
   // Someday (No Date) tasks list
   const somedayTasks = tasks.filter(task => !task.isWishlist && !task.isGift && !task.date);
@@ -1206,70 +1230,15 @@ export default function App() {
                   </div>
 
                   {!isDayTasksCollapsed && (
-                    <div className="space-y-2.5 mt-2.5">
-                      {unTimedTasks.map(task => {
-                        const isCompleted = isTaskCompletedOnDate(task, selectedDate);
-                        return (
-                          <div 
-                            key={task.id} 
-                            onClick={(e) => {
-                              const isButton = (e.target as HTMLElement).closest('button');
-                              if (!isButton) {
-                                handleEditTaskClick(task);
-                              }
-                            }}
-                            className={`flex items-center justify-between px-3.5 py-2 rounded-2xl transition-all border group cursor-pointer ${
-                              isCompleted 
-                                ? 'bg-slate-50/30 border-slate-100 border-l-4 border-l-slate-300 text-slate-400 line-through opacity-80' 
-                                : `border-slate-100 border-l-4 hover:shadow-md ${getTaskBgClass(task.color || getDefaultTaskColor(theme))} ${getTaskBorderLeftClass(task.color || getDefaultTaskColor(theme))}`
-                            }`}
-                          >
-                            <div className="flex items-center gap-3 flex-1 min-w-0 pr-2">
-                              <button
-                                onClick={() => handleToggleComplete(task.id)}
-                                className="p-0.5 text-slate-400 hover:text-[#6D9773] transition-colors bg-transparent border-0"
-                              >
-                                {isCompleted ? (
-                                  <CheckCircle2 size={19} className="text-[#6D9773]" />
-                                ) : (
-                                  <Circle size={19} className="text-slate-300 hover:text-[#6D9773]/80" />
-                                )}
-                              </button>
-                              
-                              <div className="flex-1 min-w-0 leading-tight">
-                                <p className="text-sm font-medium truncate">{task.title}</p>
-                                {task.time && (
-                                  <div className="flex items-center gap-1.5 text-[10px] text-slate-400 mt-1">
-                                    <span className="flex items-center gap-1 font-semibold text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded-md border border-amber-100 text-[10px] tracking-wide">
-                                      <Clock size={11} className="shrink-0 text-amber-600" />
-                                      <span>{task.time}</span>
-                                    </span>
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-
-                          {/* Action buttons */}
-                          <div className="flex items-center gap-1">
-                            <button
-                              onClick={() => handleEditTaskClick(task)}
-                              className="p-1.5 hover:bg-[#6D9773]/10 text-slate-400 hover:text-[#6D9773] rounded-lg transition-colors"
-                              title="Редактировать"
-                            >
-                              <Edit2 size={14} />
-                            </button>
-                            <button
-                              onClick={() => handleDeleteTask(task.id)}
-                              className="p-1.5 bg-red-50 hover:bg-red-150 text-red-500 rounded-lg transition-colors"
-                              title="Удалить"
-                            >
-                              <Trash2 size={14} />
-                            </button>
-                          </div>
-                        </div>
-                      );
-                    })}
-                    </div>
+                    <DayTaskList
+                      tasks={unTimedTasks}
+                      selectedDate={selectedDate}
+                      defaultColor={getDefaultTaskColor(theme)}
+                      onReorder={handleReorderDayTasks}
+                      onToggleComplete={handleToggleComplete}
+                      onEdit={handleEditTaskClick}
+                      onDelete={handleDeleteTask}
+                    />
                   )}
                 </div>
               )}
