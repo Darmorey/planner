@@ -8,6 +8,8 @@ export interface NamedColorItem {
   color: string;
 }
 
+export const DEFAULT_TASK_DURATION_MINUTES = 60;
+
 export const WEEKDAYS_RU = [
   { label: 'Пн', value: 1 },
   { label: 'Вт', value: 2 },
@@ -41,12 +43,12 @@ export const getSystemEndTimeStr = (startTimeStr: string) => {
   try {
     const [h, m] = startTimeStr.split(':').map(Number);
     const d = new Date();
-    d.setHours(h, m + 30);
+    d.setHours(h, m + DEFAULT_TASK_DURATION_MINUTES);
     const eh = String(d.getHours()).padStart(2, '0');
     const em = String(d.getMinutes()).padStart(2, '0');
     return `${eh}:${em}`;
   } catch (e) {
-    return '12:30';
+    return '13:00';
   }
 };
 

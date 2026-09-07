@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   Plus, CheckCircle2, Circle, Edit2, Trash2, ChevronDown,
   Repeat, Target,
@@ -137,29 +137,52 @@ function PeriodicHabitCard({
     .filter(e => e.periodKey !== periodKey && e.text.trim())
     .sort((a, b) => b.createdAt - a.createdAt);
 
-  const [draft, setDraft] = useState(currentEntry?.text || '');
+  const savedText = currentEntry?.text || '';
+  const [draft, setDraft] = useState(savedText);
   const [historyOpen, setHistoryOpen] = useState(false);
-  const [savedFlash, setSavedFlash] = useState(false);
+  const draftRef = useRef(draft);
+  const savedTextRef = useRef(savedText);
+  const debounceRef = useRef<number | null>(null);
+
+  draftRef.current = draft;
+  savedTextRef.current = savedText;
 
   useEffect(() => {
-    setDraft(currentEntry?.text || '');
-  }, [currentEntry?.text, periodKey]);
+    setDraft(savedText);
+  }, [savedText, periodKey]);
 
-  useEffect(() => {
-    if (!savedFlash) return;
-    const timer = window.setTimeout(() => setSavedFlash(false), 1500);
-    return () => window.clearTimeout(timer);
-  }, [savedFlash]);
-
-  const canSave = Boolean(draft.trim()) || Boolean(currentEntry?.text.trim());
-
-  const handleSave = () => {
-    if (!canSave) return;
-    const trimmed = draft.trim();
-    if (!trimmed && !currentEntry) return;
+  const persistIfChanged = (text: string) => {
+    const trimmed = text.trim();
+    const saved = savedTextRef.current.trim();
+    if (trimmed === saved) return;
+    if (!trimmed && !saved) return;
     onSaveEntry(trimmed);
-    setSavedFlash(true);
   };
+
+  const flushPendingSave = () => {
+    if (debounceRef.current) {
+      window.clearTimeout(debounceRef.current);
+      debounceRef.current = null;
+    }
+    persistIfChanged(draftRef.current);
+  };
+
+  const scheduleSave = (text: string) => {
+    if (debounceRef.current) window.clearTimeout(debounceRef.current);
+    debounceRef.current = window.setTimeout(() => {
+      debounceRef.current = null;
+      persistIfChanged(text);
+    }, 600);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (debounceRef.current) {
+        window.clearTimeout(debounceRef.current);
+        persistIfChanged(draftRef.current);
+      }
+    };
+  }, []);
 
   const color = habit.color || 'green';
 
@@ -185,39 +208,23 @@ function PeriodicHabitCard({
         </div>
       </div>
 
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          handleSave();
-        }}
-        className="rounded-xl bg-white/70 border border-black/5 p-3"
-      >
+      <div className="rounded-xl bg-white/70 border border-black/5 p-3">
         <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-2">
           {periodLabel}
         </p>
         <textarea
           value={draft}
-          onChange={e => setDraft(e.target.value)}
+          onChange={e => {
+            const next = e.target.value;
+            setDraft(next);
+            scheduleSave(next);
+          }}
+          onBlur={flushPendingSave}
           placeholder="Что сделала в этом периоде?"
           rows={2}
           className="w-full bg-transparent text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none resize-none leading-relaxed"
         />
-        <button
-          type="button"
-          onPointerDown={(e) => e.preventDefault()}
-          onClick={() => handleSave()}
-          aria-disabled={!canSave}
-          className={`mt-2 px-3 py-1.5 rounded-lg text-white text-xs font-bold transition-colors touch-manipulation ${
-            canSave
-              ? savedFlash
-                ? 'bg-emerald-600'
-                : 'bg-emerald-700 hover:bg-emerald-800 active:scale-[0.98]'
-              : 'bg-emerald-700/40 cursor-not-allowed'
-          }`}
-        >
-          {savedFlash ? 'Сохранено' : 'Сохранить'}
-        </button>
-      </form>
+      </div>
 
       {pastEntries.length > 0 && (
         <div className="mt-3">

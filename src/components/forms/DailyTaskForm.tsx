@@ -4,9 +4,11 @@ import { Task, TaskCategory, TaskScope, TaskRecurrence } from '../../types';
 import { formatLocalDate } from '../../utils/taskHelpers';
 import FormShell from './FormShell';
 import NotesAndPhotoFields from './NotesAndPhotoFields';
+import { PillTimeInput } from './TimePickerField';
 import {
   FormSubmitPayload,
   WEEKDAYS_RU,
+  DEFAULT_TASK_DURATION_MINUTES,
   getSystemTimeStr,
   getSystemEndTimeStr,
   handleImageUpload,
@@ -66,45 +68,6 @@ function PillDateInput({
   );
 }
 
-function PillTimeInput({
-  value,
-  onChange,
-}: {
-  value: string;
-  onChange: (v: string) => void;
-}) {
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  return (
-    <button
-      type="button"
-      onClick={() => {
-        const el = inputRef.current;
-        if (!el) return;
-        try {
-          el.showPicker?.();
-        } catch {
-          // ignore if unsupported
-        }
-        el.focus();
-        el.click();
-      }}
-      className="relative shrink-0 rounded-full bg-slate-100 px-3 py-1.5 text-sm font-medium text-slate-800 transition-colors hover:bg-slate-200/80 active:scale-[0.98]"
-    >
-      {value}
-      <input
-        ref={inputRef}
-        type="time"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="absolute inset-0 cursor-pointer opacity-0"
-        tabIndex={-1}
-        aria-hidden
-      />
-    </button>
-  );
-}
-
 export default function DailyTaskForm({
   isOpen,
   onClose,
@@ -121,7 +84,7 @@ export default function DailyTaskForm({
   const [date, setDate] = useState('');
   const [allDay, setAllDay] = useState(true);
   const [time, setTime] = useState(() => getSystemTimeStr());
-  const [duration, setDuration] = useState<number>(30);
+  const [duration, setDuration] = useState<number>(DEFAULT_TASK_DURATION_MINUTES);
   const [endDate, setEndDate] = useState('');
   const [endTime, setEndTime] = useState(() => getSystemEndTimeStr(getSystemTimeStr()));
   const [pattern, setPattern] = useState<TaskRecurrence['pattern']>('none');
@@ -145,7 +108,7 @@ export default function DailyTaskForm({
       setAllDay(!hasTimed);
       const startT = initialTask.time || getSystemTimeStr();
       setTime(startT);
-      const durVal = initialTask.duration || 30;
+      const durVal = initialTask.duration || DEFAULT_TASK_DURATION_MINUTES;
       setDuration(durVal);
       setEndDate(initialTask.endDate || startD);
       if (initialTask.endTime) {
@@ -179,7 +142,7 @@ export default function DailyTaskForm({
       setAllDay(true);
       const currentStartT = getSystemTimeStr();
       setTime(currentStartT);
-      setDuration(30);
+      setDuration(DEFAULT_TASK_DURATION_MINUTES);
       setEndDate(startD);
       setEndTime(getSystemEndTimeStr(currentStartT));
       setPattern('none');
@@ -228,9 +191,9 @@ export default function DailyTaskForm({
     const diffMins = Math.round((endObj.getTime() - startObj.getTime()) / (60 * 1000));
 
     if (diffMins >= 0) {
-      setDuration(diffMins || 30);
+      setDuration(diffMins || DEFAULT_TASK_DURATION_MINUTES);
     } else {
-      const fallbackEnd = new Date(startObj.getTime() + 30 * 60 * 1000);
+      const fallbackEnd = new Date(startObj.getTime() + DEFAULT_TASK_DURATION_MINUTES * 60 * 1000);
       const ey = fallbackEnd.getFullYear();
       const em2 = String(fallbackEnd.getMonth() + 1).padStart(2, '0');
       const ed = String(fallbackEnd.getDate()).padStart(2, '0');
@@ -238,7 +201,7 @@ export default function DailyTaskForm({
       const emin = String(fallbackEnd.getMinutes()).padStart(2, '0');
       setEndDate(`${ey}-${em2}-${ed}`);
       setEndTime(`${eh2}:${emin}`);
-      setDuration(30);
+      setDuration(DEFAULT_TASK_DURATION_MINUTES);
     }
   };
 
@@ -274,7 +237,7 @@ export default function DailyTaskForm({
       // Switching to timed: ensure sensible end from start + duration
       const startT = time || getSystemTimeStr();
       setTime(startT);
-      syncEndDateTimeFromStart(date, startT, duration || 30);
+      syncEndDateTimeFromStart(date, startT, duration || DEFAULT_TASK_DURATION_MINUTES);
     }
   };
 
@@ -307,7 +270,7 @@ export default function DailyTaskForm({
       scope,
       date,
       time: isTimed ? time : undefined,
-      duration: isTimed ? duration || 30 : undefined,
+      duration: isTimed ? duration || DEFAULT_TASK_DURATION_MINUTES : undefined,
       endDate: isTimed ? endDate || date : endDate !== date ? endDate : undefined,
       endTime: isTimed ? endTime : undefined,
       notes: notes.trim() || undefined,

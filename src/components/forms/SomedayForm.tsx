@@ -8,11 +8,13 @@ import {
   FormSubmitPayload,
   NamedColorItem,
   WEEKDAYS_RU,
+  DEFAULT_TASK_DURATION_MINUTES,
   getStyleByColor,
   getSystemTimeStr,
   getSystemEndTimeStr,
   handleImageUpload,
 } from './formHelpers';
+import { TimePickerInput } from './TimePickerField';
 import { ThemeId, getDefaultTaskColor } from '../../utils/themeTypes';
 
 interface SomedayFormProps {
@@ -44,11 +46,11 @@ export default function SomedayForm({
   const [date, setDate] = useState('');
   const [hasTime, setHasTime] = useState(false);
   const [time, setTime] = useState(() => getSystemTimeStr());
-  const [duration, setDuration] = useState<number | ''>(30);
+  const [duration, setDuration] = useState<number | ''>(DEFAULT_TASK_DURATION_MINUTES);
   const [endDate, setEndDate] = useState('');
   const [endTime, setEndTime] = useState(() => getSystemEndTimeStr(getSystemTimeStr()));
-  const [durHours, setDurHours] = useState<number>(0);
-  const [durMins, setDurMins] = useState<number>(30);
+  const [durHours, setDurHours] = useState<number>(1);
+  const [durMins, setDurMins] = useState<number>(0);
   const [pattern, setPattern] = useState<TaskRecurrence['pattern']>('none');
   const [interval, setInterval] = useState<number>(1);
   const [daysOfWeek, setDaysOfWeek] = useState<number[]>([]);
@@ -140,7 +142,7 @@ export default function SomedayForm({
       setHasTime(!!initialTask.time);
       const startT = initialTask.time || getSystemTimeStr();
       setTime(startT);
-      const durVal = initialTask.duration || 30;
+      const durVal = initialTask.duration || DEFAULT_TASK_DURATION_MINUTES;
       setDuration(durVal);
       setEndDate(initialTask.endDate || startD);
       if (initialTask.endTime) {
@@ -172,11 +174,11 @@ export default function SomedayForm({
       setHasTime(false);
       const currentStartT = getSystemTimeStr();
       setTime(currentStartT);
-      setDuration(30);
+      setDuration(DEFAULT_TASK_DURATION_MINUTES);
       setEndDate(startD);
       setEndTime(getSystemEndTimeStr(currentStartT));
-      setDurHours(0);
-      setDurMins(30);
+      setDurHours(1);
+      setDurMins(0);
       setPattern('none');
       setInterval(1);
       setDaysOfWeek([]);
@@ -227,7 +229,7 @@ export default function SomedayForm({
       }
       setDuration(diffMins);
     } else {
-      const fallbackEnd = new Date(startObj.getTime() + 30 * 60 * 1000);
+      const fallbackEnd = new Date(startObj.getTime() + DEFAULT_TASK_DURATION_MINUTES * 60 * 1000);
       const ey = fallbackEnd.getFullYear();
       const em = String(fallbackEnd.getMonth() + 1).padStart(2, '0');
       const ed = String(fallbackEnd.getDate()).padStart(2, '0');
@@ -235,9 +237,9 @@ export default function SomedayForm({
       const emin = String(fallbackEnd.getMinutes()).padStart(2, '0');
       setEndDate(`${ey}-${em}-${ed}`);
       setEndTime(`${eh2}:${emin}`);
-      setDurHours(0);
-      setDurMins(30);
-      setDuration(30);
+      setDurHours(1);
+      setDurMins(0);
+      setDuration(DEFAULT_TASK_DURATION_MINUTES);
     }
   };
 
@@ -303,7 +305,7 @@ export default function SomedayForm({
       scope: isActuallySomeday ? 'personal' : scope,
       date: isActuallySomeday ? undefined : (hasDate ? date : undefined),
       time: isActuallySomeday ? undefined : (hasTime && hasDate ? time : undefined),
-      duration: isActuallySomeday ? undefined : (hasTime && hasDate ? (Number(duration) || 30) : undefined),
+      duration: isActuallySomeday ? undefined : (hasTime && hasDate ? (Number(duration) || DEFAULT_TASK_DURATION_MINUTES) : undefined),
       endDate: isActuallySomeday ? undefined : (hasTime && hasDate ? (endDate || date) : undefined),
       endTime: isActuallySomeday ? undefined : (hasTime && hasDate ? endTime : undefined),
       notes: notes.trim() || undefined,
@@ -624,11 +626,9 @@ export default function SomedayForm({
                           </div>
                           <div>
                             <label className="block text-[9px] text-slate-400 uppercase tracking-wider font-semibold">Время начала</label>
-                            <input
-                              type="time"
+                            <TimePickerInput
                               value={time}
-                              onChange={e => handleStartTimeChangeLocal(e.target.value)}
-                              className="w-full px-2 py-1 rounded border border-slate-200 bg-white text-xs text-slate-800 focus:outline-none focus:border-blue-900"
+                              onChange={handleStartTimeChangeLocal}
                             />
                           </div>
                         </div>
@@ -650,11 +650,9 @@ export default function SomedayForm({
                           </div>
                           <div>
                             <label className="block text-[9px] text-slate-400 uppercase tracking-wider font-semibold">Время окончания</label>
-                            <input
-                              type="time"
+                            <TimePickerInput
                               value={endTime}
-                              onChange={e => handleEndTimeChangeLocal(e.target.value)}
-                              className="w-full px-2 py-1 rounded border border-slate-200 bg-white text-xs text-slate-800 focus:outline-none focus:border-blue-900"
+                              onChange={handleEndTimeChangeLocal}
                             />
                           </div>
                         </div>
