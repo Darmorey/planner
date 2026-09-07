@@ -412,8 +412,7 @@ export default function App() {
 
     setSelectedDate(dateStr);
     if (!keepOpen) {
-      setShowFullCalendar(false); // Close calendar once date is chosen
-      setCurrentTab('daily'); // Switch to daily view to show detailed tasks of that day
+      setShowFullCalendar(false);
     }
   };
 
@@ -1063,17 +1062,17 @@ export default function App() {
             <Clock size={15} />
             <span className="truncate">Расписание</span>
           </button>
-          
+
           <button
-            onClick={() => setCurrentTab('someday')}
-            className={`py-3.5 border-b-2 transition-all flex items-center justify-center gap-1.2 sm:gap-1.5 ${
-              currentTab === 'someday' 
+            onClick={() => setCurrentTab('habits')}
+            className={`py-3.5 border-b-2 transition-all flex items-center justify-center gap-1 sm:gap-1.5 ${
+              currentTab === 'habits' 
                 ? `${t.accentBorderSolid} ${t.accentText} font-semibold ${t.subAccentBgLight5}` 
                 : `border-transparent ${t.mutedHover}`
             }`}
           >
-            <Bookmark size={15} />
-            <span className="truncate">Без срока</span>
+            <Repeat size={15} />
+            <span className="truncate">Привычки</span>
           </button>
 
           <button
@@ -1099,17 +1098,17 @@ export default function App() {
             <Gift size={15} className="text-yellow-600" />
             <span className="truncate">Подарки</span>
           </button>
-
+          
           <button
-            onClick={() => setCurrentTab('habits')}
-            className={`py-3.5 border-b-2 transition-all flex items-center justify-center gap-1 sm:gap-1.5 ${
-              currentTab === 'habits' 
+            onClick={() => setCurrentTab('someday')}
+            className={`py-3.5 border-b-2 transition-all flex items-center justify-center gap-1.2 sm:gap-1.5 ${
+              currentTab === 'someday' 
                 ? `${t.accentBorderSolid} ${t.accentText} font-semibold ${t.subAccentBgLight5}` 
                 : `border-transparent ${t.mutedHover}`
             }`}
           >
-            <Repeat size={15} />
-            <span className="truncate">Привычки</span>
+            <Bookmark size={15} />
+            <span className="truncate">Без срока</span>
           </button>
         </div>
 
