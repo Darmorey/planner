@@ -1,7 +1,6 @@
 import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { X } from 'lucide-react';
 
-const ROW_H = 40;
+const ROW_H = 44;
 const PAD_ROWS = 2;
 
 function parseTime(value: string): { hours: number; minutes: number } {
@@ -16,15 +15,13 @@ function formatTime(hours: number, minutes: number): string {
   return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
 }
 
-function TimeColumn({
-  label,
+function TimeWheelColumn({
   min,
   max,
   value,
   onChange,
   active,
 }: {
-  label: string;
   min: number;
   max: number;
   value: number;
@@ -32,79 +29,110 @@ function TimeColumn({
   active: boolean;
 }) {
   const scrollerRef = useRef<HTMLDivElement>(null);
-  const scrollEndTimer = useRef<number | null>(null);
+  const interactingRef = useRef(false);
+  const settleTimerRef = useRef<number | null>(null);
+  const valueRef = useRef(value);
+  const onChangeRef = useRef(onChange);
   const options = useMemo(
     () => Array.from({ length: max - min + 1 }, (_, i) => min + i),
     [min, max]
   );
 
-  const scrollToValue = (v: number, behavior: ScrollBehavior = 'auto') => {
+  valueRef.current = value;
+  onChangeRef.current = onChange;
+
+  const indexForValue = (v: number) =>
+    Math.max(0, Math.min(options.length - 1, v - min));
+
+  const scrollToIndex = (idx: number, behavior: ScrollBehavior = 'auto') => {
     const el = scrollerRef.current;
     if (!el) return;
-    const idx = Math.max(0, Math.min(options.length - 1, v - min));
-    el.scrollTo({ top: idx * ROW_H, behavior });
+    const clamped = Math.max(0, Math.min(options.length - 1, idx));
+    el.scrollTo({ top: clamped * ROW_H, behavior });
+  };
+
+  const readIndexFromScroll = () => {
+    const el = scrollerRef.current;
+    if (!el) return indexForValue(valueRef.current);
+    const raw = el.scrollTop / ROW_H;
+    return Math.max(0, Math.min(options.length - 1, Math.round(raw)));
+  };
+
+  const settleScroll = (behavior: ScrollBehavior = 'smooth') => {
+    const idx = readIndexFromScroll();
+    scrollToIndex(idx, behavior);
+    const next = options[idx];
+    if (next !== valueRef.current) onChangeRef.current(next);
   };
 
   useLayoutEffect(() => {
-    if (!active) return;
-    scrollToValue(value);
+    if (!active || interactingRef.current) return;
+    scrollToIndex(indexForValue(value));
   }, [active, value, min, options.length]);
 
-  const readValueFromScroll = () => {
-    const el = scrollerRef.current;
-    if (!el) return value;
-    const idx = Math.round(el.scrollTop / ROW_H);
-    const clampedIdx = Math.max(0, Math.min(options.length - 1, idx));
-    return options[clampedIdx];
-  };
-
-  const handleScroll = () => {
-    const next = readValueFromScroll();
-    if (next !== value) onChange(next);
-
-    if (scrollEndTimer.current) window.clearTimeout(scrollEndTimer.current);
-    scrollEndTimer.current = window.setTimeout(() => {
-      const snapped = readValueFromScroll();
-      scrollToValue(snapped, 'smooth');
-      if (snapped !== value) onChange(snapped);
-    }, 100);
-  };
-
   useEffect(() => {
-    return () => {
-      if (scrollEndTimer.current) window.clearTimeout(scrollEndTimer.current);
+    const el = scrollerRef.current;
+    if (!el) return;
+
+    const onScroll = () => {
+      interactingRef.current = true;
+      if (settleTimerRef.current) window.clearTimeout(settleTimerRef.current);
+      settleTimerRef.current = window.setTimeout(() => {
+        interactingRef.current = false;
+        settleScroll('smooth');
+      }, 120);
     };
-  }, []);
+
+    const onScrollEnd = () => {
+      if (settleTimerRef.current) {
+        window.clearTimeout(settleTimerRef.current);
+        settleTimerRef.current = null;
+      }
+      interactingRef.current = false;
+      settleScroll('smooth');
+    };
+
+    const onTouchEnd = () => {
+      window.setTimeout(onScrollEnd, 80);
+    };
+
+    el.addEventListener('scroll', onScroll, { passive: true });
+    el.addEventListener('scrollend', onScrollEnd);
+    el.addEventListener('touchend', onTouchEnd, { passive: true });
+    el.addEventListener('mouseup', onScrollEnd);
+
+    return () => {
+      el.removeEventListener('scroll', onScroll);
+      el.removeEventListener('scrollend', onScrollEnd);
+      el.removeEventListener('touchend', onTouchEnd);
+      el.removeEventListener('mouseup', onScrollEnd);
+      if (settleTimerRef.current) window.clearTimeout(settleTimerRef.current);
+    };
+  }, [options, min]);
 
   return (
-    <div className="flex-1 min-w-0">
-      <span className="mb-1 block text-center text-[10px] font-bold uppercase tracking-wider text-slate-400">
-        {label}
-      </span>
-      <div className="relative h-[200px] overflow-hidden">
-        <div className="pointer-events-none absolute inset-x-1 top-1/2 z-10 h-10 -translate-y-1/2 rounded-lg border border-slate-200 bg-slate-100/70" />
-        <div
-          ref={scrollerRef}
-          onScroll={handleScroll}
-          className="h-full overflow-y-auto scroll-smooth snap-y snap-mandatory [scrollbar-width:none] [&::-webkit-scrollbar]:hidden overscroll-y-contain"
-        >
-          <div style={{ height: ROW_H * PAD_ROWS }} aria-hidden />
-          {options.map((n) => (
-            <div
-              key={n}
-              className="flex h-10 shrink-0 snap-center snap-always items-center justify-center text-xl font-semibold text-slate-800"
-            >
-              {String(n).padStart(2, '0')}
-            </div>
-          ))}
-          <div style={{ height: ROW_H * PAD_ROWS }} aria-hidden />
-        </div>
+    <div className="relative h-[220px] flex-1 min-w-0 overflow-hidden">
+      <div
+        ref={scrollerRef}
+        className="h-full overflow-y-auto overscroll-y-contain [scrollbar-width:none] [-webkit-overflow-scrolling:touch] [&::-webkit-scrollbar]:hidden"
+        style={{ touchAction: 'pan-y' }}
+      >
+        <div style={{ height: ROW_H * PAD_ROWS }} aria-hidden />
+        {options.map((n) => (
+          <div
+            key={n}
+            className="flex h-11 shrink-0 items-center justify-center font-medium tabular-nums text-[22px] text-slate-900"
+          >
+            {String(n).padStart(2, '0')}
+          </div>
+        ))}
+        <div style={{ height: ROW_H * PAD_ROWS }} aria-hidden />
       </div>
     </div>
   );
 }
 
-function TimePickerModal({
+function TimePickerSheet({
   isOpen,
   value,
   onClose,
@@ -129,53 +157,61 @@ function TimePickerModal({
   if (!isOpen) return null;
 
   return (
-    <div
-      className="fixed inset-0 z-[70] flex items-end justify-center bg-slate-900/50 p-4 sm:items-center"
-      onClick={onClose}
-    >
+    <div className="fixed inset-0 z-[70] flex flex-col justify-end">
+      <button
+        type="button"
+        className="absolute inset-0 bg-black/30"
+        aria-label="Закрыть"
+        onClick={onClose}
+      />
+
       <div
-        className="w-full max-w-xs rounded-2xl border border-slate-100 bg-white shadow-2xl animate-fade-in"
+        className="relative bg-[#f2f2f7] animate-fade-in"
+        style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
-          <span className="text-sm font-bold text-slate-800">Выбор времени</span>
+        <div className="flex items-center justify-between border-b border-[#c6c6c8]/80 bg-[#f2f2f7]/95 px-4 py-2.5 backdrop-blur-sm">
           <button
             type="button"
             onClick={onClose}
-            className="rounded-full p-1.5 text-slate-400 transition-colors hover:bg-slate-50 hover:text-slate-600"
-            aria-label="Закрыть"
+            className="text-[17px] font-normal text-[#007aff]"
           >
-            <X size={16} />
+            Отмена
           </button>
-        </div>
-
-        <div className="flex gap-2 px-4 py-3">
-          <TimeColumn
-            label="Часы"
-            min={0}
-            max={23}
-            value={hours}
-            onChange={setHours}
-            active={isOpen}
-          />
-          <TimeColumn
-            label="Минуты"
-            min={0}
-            max={59}
-            value={minutes}
-            onChange={setMinutes}
-            active={isOpen}
-          />
-        </div>
-
-        <div className="border-t border-slate-100 p-4">
+          <span className="text-[17px] font-semibold text-slate-900">Время</span>
           <button
             type="button"
             onClick={() => onConfirm(formatTime(hours, minutes))}
-            className="w-full rounded-xl bg-[#0C3B2E] py-3 text-sm font-bold text-white transition-colors hover:bg-[#0a3227] active:scale-[0.98]"
+            className="text-[17px] font-semibold text-[#007aff]"
           >
             Готово
           </button>
+        </div>
+
+        <div className="relative mx-3 my-3 overflow-hidden rounded-xl bg-white">
+          <div className="pointer-events-none absolute inset-x-0 top-0 z-10 h-[88px] bg-gradient-to-b from-white via-white/80 to-transparent" />
+          <div className="pointer-events-none absolute inset-x-4 top-1/2 z-10 h-11 -translate-y-1/2 rounded-lg bg-[#767680]/10" />
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-[88px] bg-gradient-to-t from-white via-white/80 to-transparent" />
+
+          <div className="relative flex items-stretch px-2 py-1">
+            <TimeWheelColumn
+              min={0}
+              max={23}
+              value={hours}
+              onChange={setHours}
+              active={isOpen}
+            />
+            <div className="flex w-6 shrink-0 items-center justify-center pb-0.5 text-[22px] font-medium text-slate-900">
+              :
+            </div>
+            <TimeWheelColumn
+              min={0}
+              max={59}
+              value={minutes}
+              onChange={setMinutes}
+              active={isOpen}
+            />
+          </div>
         </div>
       </div>
     </div>
@@ -200,7 +236,7 @@ export function PillTimeInput({
       >
         {value}
       </button>
-      <TimePickerModal
+      <TimePickerSheet
         isOpen={open}
         value={value}
         onClose={() => setOpen(false)}
@@ -233,7 +269,7 @@ export function TimePickerInput({
       >
         {value}
       </button>
-      <TimePickerModal
+      <TimePickerSheet
         isOpen={open}
         value={value}
         onClose={() => setOpen(false)}
