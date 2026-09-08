@@ -63,6 +63,7 @@ function DayTaskRow({
           type="button"
           onPointerDown={(e) => controls.start(e)}
           className="shrink-0 touch-none rounded-lg p-1 text-slate-300 transition-colors hover:bg-black/5 hover:text-slate-500 active:cursor-grabbing cursor-grab"
+          data-no-tab-swipe
           aria-label="Перетащить задачу"
         >
           <GripVertical size={16} />

@@ -38,6 +38,9 @@ import {
 
 import { ThemeId, isThemeId, getDefaultTaskColor } from './utils/themeTypes';
 
+const MAIN_TABS = ['daily', 'habits', 'wishlist', 'gifts', 'someday'] as const;
+type MainTab = (typeof MAIN_TABS)[number];
+
 interface ThemeConfig {
   id: ThemeId;
   name: string;
@@ -252,7 +255,8 @@ export default function App() {
   const [slideDirection, setSlideDirection] = useState<'left' | 'right'>('left');
   const [showFullCalendar, setShowFullCalendar] = useState(false);
   const [hideCompleted, setHideCompleted] = useState(false);
-  const [currentTab, setCurrentTab] = useState<'daily' | 'someday' | 'wishlist' | 'gifts' | 'habits'>('daily');
+  const [currentTab, setCurrentTab] = useState<MainTab>('daily');
+  const [tabSlideDirection, setTabSlideDirection] = useState<'left' | 'right'>('left');
   const [activeScope, setActiveScope] = useState<'all' | 'personal' | 'work'>('all');
 
   // Modal control
@@ -353,9 +357,25 @@ export default function App() {
     };
   }, []);
 
-  // Swipe: header = weeks, content = days
+  // Swipe: header = weeks, content = tabs
   const weekTouchStartRef = useRef<{ x: number; y: number } | null>(null);
-  const dayTouchStartRef = useRef<{ x: number; y: number } | null>(null);
+  const tabTouchStartRef = useRef<{ x: number; y: number } | null>(null);
+
+  const navigateTab = (direction: 1 | -1) => {
+    const idx = MAIN_TABS.indexOf(currentTab);
+    const nextIdx = idx + direction;
+    if (nextIdx < 0 || nextIdx >= MAIN_TABS.length) return;
+    setTabSlideDirection(direction > 0 ? 'left' : 'right');
+    setCurrentTab(MAIN_TABS[nextIdx]);
+  };
+
+  const goToTab = (tab: MainTab) => {
+    const oldIdx = MAIN_TABS.indexOf(currentTab);
+    const newIdx = MAIN_TABS.indexOf(tab);
+    if (newIdx > oldIdx) setTabSlideDirection('left');
+    else if (newIdx < oldIdx) setTabSlideDirection('right');
+    setCurrentTab(tab);
+  };
 
   const handleWeekTouchStart = (e: React.TouchEvent) => {
     weekTouchStartRef.current = {
@@ -378,25 +398,26 @@ export default function App() {
     }
   };
 
-  const handleDayTouchStart = (e: React.TouchEvent) => {
-    dayTouchStartRef.current = {
+  const handleTabTouchStart = (e: React.TouchEvent) => {
+    const target = e.target as HTMLElement;
+    if (target.closest('input, textarea, [contenteditable="true"], [data-no-tab-swipe]')) return;
+    tabTouchStartRef.current = {
       x: e.touches[0].clientX,
       y: e.touches[0].clientY,
     };
   };
 
-  const handleDayTouchEnd = (e: React.TouchEvent) => {
-    if (!dayTouchStartRef.current) return;
-    const dx = dayTouchStartRef.current.x - e.changedTouches[0].clientX;
-    const dy = dayTouchStartRef.current.y - e.changedTouches[0].clientY;
-    dayTouchStartRef.current = null;
+  const handleTabTouchEnd = (e: React.TouchEvent) => {
+    if (!tabTouchStartRef.current) return;
+    const dx = tabTouchStartRef.current.x - e.changedTouches[0].clientX;
+    const dy = tabTouchStartRef.current.y - e.changedTouches[0].clientY;
+    tabTouchStartRef.current = null;
 
-    // Ignore mostly-vertical scrolls
     if (Math.abs(dx) < 50 || Math.abs(dx) < Math.abs(dy) * 1.2) return;
     if (dx > 0) {
-      navigateDays(1);
+      navigateTab(1);
     } else {
-      navigateDays(-1);
+      navigateTab(-1);
     }
   };
 
@@ -1116,7 +1137,7 @@ export default function App() {
         {/* PERSISTENT MAIN NAVIGATION TABS */}
         <div className={`grid grid-cols-5 border-b ${t.subAccentBorderLight} text-center text-[9px] xs:text-[10px] sm:text-xs font-medium ${t.mutedText} ${t.cardBg} shadow-sm z-10`}>
           <button
-            onClick={() => setCurrentTab('daily')}
+            onClick={() => goToTab('daily')}
             className={`py-3.5 border-b-2 transition-all flex items-center justify-center gap-1.2 sm:gap-1.5 ${
               currentTab === 'daily' 
                 ? `${t.accentBorderSolid} ${t.accentText} font-semibold ${t.subAccentBgLight5}` 
@@ -1128,7 +1149,7 @@ export default function App() {
           </button>
 
           <button
-            onClick={() => setCurrentTab('habits')}
+            onClick={() => goToTab('habits')}
             className={`py-3.5 border-b-2 transition-all flex items-center justify-center gap-1 sm:gap-1.5 ${
               currentTab === 'habits' 
                 ? `${t.accentBorderSolid} ${t.accentText} font-semibold ${t.subAccentBgLight5}` 
@@ -1140,7 +1161,7 @@ export default function App() {
           </button>
 
           <button
-            onClick={() => setCurrentTab('wishlist')}
+            onClick={() => goToTab('wishlist')}
             className={`py-3.5 border-b-2 transition-all flex items-center justify-center gap-1.2 sm:gap-1.5 ${
               currentTab === 'wishlist' 
                 ? `${t.accentBorderSolid} ${t.accentText} font-semibold ${t.subAccentBgLight5}` 
@@ -1152,7 +1173,7 @@ export default function App() {
           </button>
 
           <button
-            onClick={() => setCurrentTab('gifts')}
+            onClick={() => goToTab('gifts')}
             className={`py-3.5 border-b-2 transition-all flex items-center justify-center gap-1.2 sm:gap-1.5 ${
               currentTab === 'gifts' 
                 ? `${t.accentBorderSolid} ${t.accentText} font-semibold ${t.subAccentBgLight5}` 
@@ -1164,7 +1185,7 @@ export default function App() {
           </button>
           
           <button
-            onClick={() => setCurrentTab('someday')}
+            onClick={() => goToTab('someday')}
             className={`py-3.5 border-b-2 transition-all flex items-center justify-center gap-1.2 sm:gap-1.5 ${
               currentTab === 'someday' 
                 ? `${t.accentBorderSolid} ${t.accentText} font-semibold ${t.subAccentBgLight5}` 
@@ -1177,7 +1198,11 @@ export default function App() {
         </div>
 
         {/* MAIN DISPLAY VIEWPORT */}
-        <div className={`flex-1 overflow-y-auto px-6 py-6 ${t.contentBg}`}>
+        <div
+          className={`flex-1 overflow-y-auto overflow-x-hidden px-6 py-6 ${t.contentBg}`}
+          onTouchStart={handleTabTouchStart}
+          onTouchEnd={handleTabTouchEnd}
+        >
           
           {showFullCalendar && (
             <div className="mb-6 -mx-6 animate-fade-in">
@@ -1191,13 +1216,33 @@ export default function App() {
             </div>
           )}
 
+          <AnimatePresence mode="popLayout" custom={tabSlideDirection} initial={false}>
+            <motion.div
+              key={currentTab}
+              custom={tabSlideDirection}
+              variants={{
+                enter: (dir: 'left' | 'right') => ({
+                  x: dir === 'left' ? '100%' : '-100%',
+                  opacity: 0.85,
+                }),
+                center: {
+                  x: 0,
+                  opacity: 1,
+                },
+                exit: (dir: 'left' | 'right') => ({
+                  x: dir === 'left' ? '-100%' : '100%',
+                  opacity: 0.85,
+                }),
+              }}
+              initial="enter"
+              animate="center"
+              exit="exit"
+              transition={{ type: 'spring', stiffness: 380, damping: 35 }}
+            >
+
           {/* DAILY SCHEDULE TAB */}
           {currentTab === 'daily' && (
-            <div
-              className="space-y-6"
-              onTouchStart={handleDayTouchStart}
-              onTouchEnd={handleDayTouchEnd}
-            > 
+            <div className="space-y-6">
               {/* WORKSPACE SUB-TABS (личные задачи и рабочие задачи) */}
               <div className={`flex items-center justify-between gap-2 border-b ${t.subAccentBorderLight10} pb-3`}>
                 <div className={`flex gap-1 sm:gap-1.5 ${t.subAccentBgLight5} p-0.5 sm:p-1 rounded-xl border ${t.subAccentBorderLight10} shrink-0`}>
@@ -1573,6 +1618,8 @@ export default function App() {
               onSavePeriodicEntry={handleSavePeriodicEntry}
             />
           )}
+            </motion.div>
+          </AnimatePresence>
         </div>
       </div>  
 
