@@ -1,5 +1,5 @@
-import React from 'react';
-import { X, Palette, Trash2 } from 'lucide-react';
+import React, { useRef } from 'react';
+import { X, Palette, Trash2, Download, Upload } from 'lucide-react';
 import { ThemeId } from '../utils/themeTypes';
 
 interface SettingsModalProps {
@@ -9,6 +9,8 @@ interface SettingsModalProps {
   isConfirmingClear: boolean;
   theme: ThemeId;
   onThemeChange: (newTheme: ThemeId) => void;
+  onExportBackup: () => void;
+  onImportBackup: (file: File) => void;
 }
 
 const themesList = [
@@ -24,9 +26,19 @@ export default function SettingsModal({
   onClearAllData,
   isConfirmingClear,
   theme,
-  onThemeChange
+  onThemeChange,
+  onExportBackup,
+  onImportBackup,
 }: SettingsModalProps) {
+  const importInputRef = useRef<HTMLInputElement>(null);
+
   if (!isOpen) return null;
+
+  const handleImportChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) onImportBackup(file);
+    e.target.value = '';
+  };
 
   return (
     <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-in">
@@ -42,7 +54,7 @@ export default function SettingsModal({
           <Palette className="text-slate-600" size={24} />
           <div>
             <h3 className="text-lg font-semibold text-slate-800">Настройки ежедневника</h3>
-            <p className="text-xs text-slate-400 font-medium">Темы оформления и сброс данных</p>
+            <p className="text-xs text-slate-400 font-medium">Тема, резервная копия и сброс данных</p>
           </div>
         </div>
 
@@ -71,6 +83,43 @@ export default function SettingsModal({
                 </div>
               </button>
             ))}
+          </div>
+        </div>
+
+        <div className="mb-5 pb-5 border-b border-slate-100/80">
+          <div className="flex items-center gap-2 mb-3">
+            <Download className="text-slate-500" size={17} />
+            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest leading-none">
+              Резервная копия
+            </span>
+          </div>
+          <p className="text-[11px] text-slate-500 mb-3 leading-normal">
+            Сохраните все задачи, заметки и привычки в файл — чтобы перенести их на другой телефон или сделать бэкап.
+          </p>
+          <div className="flex flex-col gap-2">
+            <button
+              type="button"
+              onClick={onExportBackup}
+              className="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-slate-50/80 py-2.5 px-3 text-xs font-semibold text-slate-700 transition-all hover:border-slate-300 hover:bg-slate-100 active:scale-[0.98]"
+            >
+              <Download size={14} />
+              Скачать файл
+            </button>
+            <input
+              ref={importInputRef}
+              type="file"
+              accept=".json,application/json"
+              className="hidden"
+              onChange={handleImportChange}
+            />
+            <button
+              type="button"
+              onClick={() => importInputRef.current?.click()}
+              className="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white py-2.5 px-3 text-xs font-semibold text-slate-700 transition-all hover:border-slate-300 hover:bg-slate-50 active:scale-[0.98]"
+            >
+              <Upload size={14} />
+              Восстановить из файла
+            </button>
           </div>
         </div>
 

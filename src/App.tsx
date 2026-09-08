@@ -29,6 +29,12 @@ import HabitsTab from './components/HabitsTab';
 import HabitFormModal from './components/HabitFormModal';
 import DayTaskList from './components/DayTaskList';
 import { normalizeHabits } from './utils/habitHelpers';
+import {
+  applyPlannerBackup,
+  downloadPlannerBackup,
+  getBackupStats,
+  parsePlannerBackup,
+} from './utils/backupHelpers';
 
 import { ThemeId, isThemeId, getDefaultTaskColor } from './utils/themeTypes';
 
@@ -288,6 +294,40 @@ export default function App() {
       return {};
     }
   });
+
+  const handleExportBackup = () => {
+    downloadPlannerBackup();
+  };
+
+  const handleImportBackup = async (file: File) => {
+    try {
+      const text = await file.text();
+      const backup = parsePlannerBackup(text);
+      if (!backup) {
+        window.alert('Не удалось прочитать файл. Выберите резервную копию планера (.json).');
+        return;
+      }
+
+      const stats = getBackupStats(backup);
+      const exportedLabel = backup.exportedAt
+        ? new Date(backup.exportedAt).toLocaleDateString('ru-RU')
+        : 'неизвестная дата';
+
+      const confirmed = window.confirm(
+        `Восстановить данные из копии от ${exportedLabel}?\n\n` +
+          `Задач: ${stats.tasks}\n` +
+          `Заметок: ${stats.notes}\n` +
+          `Привычек: ${stats.habits}\n\n` +
+          'Текущие данные на этом телефоне будут заменены.'
+      );
+      if (!confirmed) return;
+
+      applyPlannerBackup(backup);
+      window.location.reload();
+    } catch {
+      window.alert('Не удалось восстановить данные из файла.');
+    }
+  };
 
   const handleClearAllData = () => {
     if (!isConfirmingClear) {
@@ -1580,6 +1620,8 @@ export default function App() {
           setTheme(newTheme);
           localStorage.setItem('task_calendar_theme', newTheme);
         }}
+        onExportBackup={handleExportBackup}
+        onImportBackup={handleImportBackup}
       />
 
       {/* NOTES SYSTEM MODALS */}
