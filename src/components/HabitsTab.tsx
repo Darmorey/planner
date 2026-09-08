@@ -27,6 +27,7 @@ interface HabitsTabProps {
   onAddPeriodic: () => void;
   onEditHabit: (habit: Habit) => void;
   onDeleteHabit: (id: string) => void;
+  onOpenStats: (habit: Habit) => void;
   onToggleDaily: (habitId: string, dateStr: string) => void;
   onSavePeriodicEntry: (habitId: string, periodKey: string, text: string) => void;
 }
@@ -39,6 +40,7 @@ function DailyHabitCard({
   onToggle,
   onEdit,
   onDelete,
+  onOpenStats,
 }: {
   habit: Habit;
   selectedDate: string;
@@ -47,6 +49,7 @@ function DailyHabitCard({
   onToggle: () => void;
   onEdit: () => void;
   onDelete: () => void;
+  onOpenStats: () => void;
 }) {
   const completed = habit.completedDates || [];
   const isDoneToday = completed.includes(selectedDate);
@@ -69,11 +72,15 @@ function DailyHabitCard({
         )}
       </button>
 
-      <div className="flex-1 min-w-0">
+      <button
+        type="button"
+        onClick={onOpenStats}
+        className="flex-1 min-w-0 text-left"
+      >
         <p className={`text-sm font-bold truncate ${isDoneToday ? 'opacity-70' : ''}`}>
           {habit.title}
         </p>
-        <div className="flex items-center gap-1 mt-1.5">
+        <div className="flex items-center gap-1 mt-1.5 pointer-events-none">
           {weekDates.map((d, i) => {
             const done = completed.includes(d);
             const isSelected = d === selectedDate;
@@ -93,7 +100,7 @@ function DailyHabitCard({
             );
           })}
         </div>
-      </div>
+      </button>
 
       <div className="flex gap-1 shrink-0">
         <button
@@ -121,12 +128,14 @@ function PeriodicHabitCard({
   onSaveEntry,
   onEdit,
   onDelete,
+  onOpenStats,
 }: {
   habit: Habit;
   selectedDate: string;
   onSaveEntry: (text: string) => void;
   onEdit: () => void;
   onDelete: () => void;
+  onOpenStats: () => void;
 }) {
   const period = habit.period || 'month';
   const periodKey = getPeriodKey(period, selectedDate);
@@ -189,12 +198,16 @@ function PeriodicHabitCard({
   return (
     <div className={`rounded-2xl border p-4 shadow-sm ${getTaskBgClass(color)} border-black/5`}>
       <div className="flex items-start justify-between gap-2 mb-3">
-        <div className="min-w-0 flex-1">
+        <button
+          type="button"
+          onClick={onOpenStats}
+          className="min-w-0 flex-1 text-left"
+        >
           <h4 className="text-sm font-bold leading-snug">{habit.title}</h4>
           <p className="text-[10px] font-semibold uppercase tracking-wider opacity-60 mt-0.5">
             {period === 'week' ? 'Неделя' : period === 'month' ? 'Месяц' : 'Год'}
           </p>
-        </div>
+        </button>
         <div className="flex gap-1 shrink-0">
           {currentEntry?.text.trim() && (
             <CheckCircle2 size={18} className="text-emerald-600 mt-0.5" />
@@ -269,6 +282,7 @@ export default function HabitsTab({
   onAddPeriodic,
   onEditHabit,
   onDeleteHabit,
+  onOpenStats,
   onToggleDaily,
   onSavePeriodicEntry,
 }: HabitsTabProps) {
@@ -328,6 +342,7 @@ export default function HabitsTab({
                   onToggle={() => onToggleDaily(habit.id, selectedDate)}
                   onEdit={() => onEditHabit(habit)}
                   onDelete={() => confirmDelete(habit.id)}
+                  onOpenStats={() => onOpenStats(habit)}
                 />
               </div>
             ))}
@@ -379,6 +394,7 @@ export default function HabitsTab({
                   }}
                   onEdit={() => onEditHabit(habit)}
                   onDelete={() => confirmDelete(habit.id)}
+                  onOpenStats={() => onOpenStats(habit)}
                 />
               </div>
             ))}

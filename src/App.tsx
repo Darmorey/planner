@@ -27,6 +27,7 @@ import WishlistTab from './components/WishlistTab';
 import GiftsTab from './components/GiftsTab';
 import HabitsTab from './components/HabitsTab';
 import HabitFormModal from './components/HabitFormModal';
+import HabitStatsModal from './components/HabitStatsModal';
 import DayTaskList from './components/DayTaskList';
 import { normalizeHabits } from './utils/habitHelpers';
 import {
@@ -287,6 +288,7 @@ export default function App() {
   const [deletingRecurringTask, setDeletingRecurringTask] = useState<{ taskId: string; dateStr: string; taskTitle: string } | null>(null);
 
   const [isHabitFormOpen, setIsHabitFormOpen] = useState(false);
+  const [statsHabit, setStatsHabit] = useState<Habit | null>(null);
   const [editingHabit, setEditingHabit] = useState<Habit | null>(null);
   const [defaultHabitKind, setDefaultHabitKind] = useState<'daily' | 'periodic'>('daily');
 
@@ -1613,6 +1615,7 @@ export default function App() {
                 setDefaultHabitKind(habit.kind);
                 setIsHabitFormOpen(true);
               }}
+              onOpenStats={setStatsHabit}
               onDeleteHabit={handleDeleteHabit}
               onToggleDaily={handleToggleDailyHabit}
               onSavePeriodicEntry={handleSavePeriodicEntry}
@@ -1633,6 +1636,13 @@ export default function App() {
         initialHabit={editingHabit}
         defaultKind={defaultHabitKind}
         theme={theme}
+      />
+
+      <HabitStatsModal
+        isOpen={!!statsHabit}
+        onClose={() => setStatsHabit(null)}
+        habit={statsHabit}
+        initialDate={selectedDate}
       />
 
       {/* DETAILED DIALOG MODALS */}
