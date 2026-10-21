@@ -27,6 +27,7 @@ import HabitsTab from './components/HabitsTab';
 import HabitFormModal from './components/HabitFormModal';
 import HabitStatsModal from './components/HabitStatsModal';
 import DayTaskList from './components/DayTaskList';
+import TaskColorBadge from './components/TaskColorBadge';
 import { normalizeHabits } from './utils/habitHelpers';
 import {
   applyPlannerBackup,
@@ -1485,8 +1486,14 @@ export default function App() {
 
                                 {/* Core description */}
                                 <div className="mt-2 text-left">
-                                  <h4 className={`text-sm font-semibold tracking-wide truncate ${isCompleted ? 'line-through text-slate-400' : 'text-slate-800'}`}>
-                                    {task.title}
+                                  <h4 className={`flex min-w-0 items-center gap-1.5 text-sm font-semibold tracking-wide ${isCompleted ? 'line-through text-slate-400' : 'text-slate-800'}`}>
+                                    {!isCompleted && (
+                                      <TaskColorBadge
+                                        color={task.color || (isWork ? 'dark' : getDefaultTaskColor(theme))}
+                                        size="md"
+                                      />
+                                    )}
+                                    <span className="truncate">{task.title}</span>
                                   </h4>
                                   {task.notes && (
                                     <p className={`text-[11px] mt-1 leading-normal line-clamp-2 ${isCompleted ? 'text-slate-400' : 'text-slate-650'}`}>

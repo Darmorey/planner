@@ -6,6 +6,7 @@ import {
 import { Task } from '../types';
 import { getTaskBgClass, getTaskBorderLeftClass } from '../utils/themeHelpers';
 import { isTaskCompletedOnDate } from '../utils/taskHelpers';
+import TaskColorBadge from './TaskColorBadge';
 
 interface DayTaskListProps {
   tasks: Task[];
@@ -82,7 +83,10 @@ function DayTaskRow({
         </button>
 
         <div className="min-w-0 flex-1 leading-tight">
-          <p className="truncate text-sm font-medium">{task.title}</p>
+          <p className="flex min-w-0 items-center gap-1.5 truncate text-sm font-medium">
+            {!isCompleted && <TaskColorBadge color={color} />}
+            <span className="truncate">{task.title}</span>
+          </p>
           {task.time && (
             <div className="mt-1 flex items-center gap-1.5 text-[10px] text-slate-400">
               <span className="flex items-center gap-1 rounded-md border border-amber-100 bg-amber-50 px-1.5 py-0.5 text-[10px] font-semibold tracking-wide text-amber-700">

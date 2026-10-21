@@ -15,6 +15,8 @@ import {
   formatDatePillRu,
 } from './formHelpers';
 import { ThemeId, getDefaultTaskColor } from '../../utils/themeTypes';
+import { getTaskColorHint } from '../../utils/taskColorHints';
+import { getTextThemeClass } from '../../utils/themeHelpers';
 
 interface DailyTaskFormProps {
   isOpen: boolean;
@@ -384,23 +386,34 @@ export default function DailyTaskForm({
             { value: 'purple', bg: 'bg-[#C3ABD9]', ring: 'ring-[#C3ABD9]/40' },
             { value: 'orange', bg: 'bg-[#EED0AC]', ring: 'ring-[#EED0AC]/40' },
             { value: 'dark', bg: 'bg-[#ABD9D1]', ring: 'ring-[#ABD9D1]/40' },
-          ].map((item) => (
+          ].map((item) => {
+            const hint = getTaskColorHint(item.value);
+            const isSelected = color === item.value;
+            return (
             <button
               key={item.value}
               type="button"
               onClick={() => setColor(item.value)}
               className={`w-8 h-8 rounded-full ${item.bg} flex items-center justify-center transition-all cursor-pointer ${
-                color === item.value
+                isSelected
                   ? `ring-4 ring-offset-2 scale-110 ${item.ring}`
                   : 'hover:opacity-85'
               }`}
-              aria-label={item.value}
+              aria-label={hint ? `${hint.label} (${item.value})` : item.value}
+              title={hint?.label}
             >
-              {color === item.value && (
+              {hint ? (
+                <span
+                  className={`text-xs font-bold ${isSelected ? 'text-white drop-shadow-sm' : getTextThemeClass(item.value)}`}
+                >
+                  {hint.letter}
+                </span>
+              ) : isSelected ? (
                 <span className="text-white text-xs font-bold">✓</span>
-              )}
+              ) : null}
             </button>
-          ))}
+            );
+          })}
         </div>
       </div>
 
