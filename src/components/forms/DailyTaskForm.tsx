@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { RotateCw, Briefcase, User, Plus, ChevronDown } from 'lucide-react';
+import { RotateCw, Briefcase, User, Plus, ChevronDown, HelpCircle } from 'lucide-react';
 import { Task, TaskCategory, TaskScope, TaskRecurrence } from '../../types';
 import { formatLocalDate } from '../../utils/taskHelpers';
 import FormShell from './FormShell';
@@ -15,7 +15,7 @@ import {
   formatDatePillRu,
 } from './formHelpers';
 import { ThemeId, getDefaultTaskColor } from '../../utils/themeTypes';
-import { getTaskColorHint } from '../../utils/taskColorHints';
+import { getTaskColorHint, getTaskColorHintLegendItems } from '../../utils/taskColorHints';
 import { getTextThemeClass } from '../../utils/themeHelpers';
 
 interface DailyTaskFormProps {
@@ -97,6 +97,7 @@ export default function DailyTaskForm({
   const [notes, setNotes] = useState('');
   const [color, setColor] = useState(themeDefaultColor);
   const [image, setImage] = useState<string | undefined>(undefined);
+  const [showColorHintLegend, setShowColorHintLegend] = useState(false);
 
   useEffect(() => {
     const todayStr = formatLocalDate(new Date());
@@ -156,6 +157,7 @@ export default function DailyTaskForm({
       setColor(themeDefaultColor);
       setImage(undefined);
     }
+    setShowColorHintLegend(false);
   }, [initialTask, defaultDate, isOpen, themeDefaultColor]);
 
   const syncEndDateTimeFromStart = (startDateStr: string, startTimeStr: string, durationMins: number) => {
@@ -377,7 +379,43 @@ export default function DailyTaskForm({
       </div>
 
       <div>
-        <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Цвет задачи / события</label>
+        <div className="mb-2 flex items-center gap-1.5">
+          <span className="text-xs font-bold uppercase tracking-widest text-slate-500">
+            Цвет задачи / события
+          </span>
+          <button
+            type="button"
+            onClick={() => setShowColorHintLegend((v) => !v)}
+            className="inline-flex h-5 w-5 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"
+            aria-label="Расшифровка букв на цветах"
+            aria-expanded={showColorHintLegend}
+          >
+            <HelpCircle size={14} strokeWidth={2.25} />
+          </button>
+        </div>
+        {showColorHintLegend && (
+          <div className="mb-3 animate-fade-in rounded-xl border border-slate-200 bg-slate-50/90 px-3 py-2.5 text-left">
+            <p className="mb-2 text-[10px] font-bold uppercase tracking-widest text-slate-500">
+              Буквы на кружках
+            </p>
+            <ul className="space-y-1.5">
+              {getTaskColorHintLegendItems().map((item) => (
+                <li key={item.key} className="flex items-center gap-2 text-sm text-slate-700">
+                  <span
+                    className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold ${item.swatchClass} ${getTextThemeClass(item.key)}`}
+                  >
+                    {item.letter}
+                  </span>
+                  <span>
+                    <span className="font-semibold">{item.letter}</span>
+                    {' — '}
+                    {item.label.charAt(0).toUpperCase() + item.label.slice(1)}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
         <div className="flex gap-3">
           {[
             { value: 'blue', bg: 'bg-[#ABC3D9]', ring: 'ring-[#ABC3D9]/40' },
