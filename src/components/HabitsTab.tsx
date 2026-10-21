@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Plus, CheckCircle2, Circle, Edit2, Trash2, ChevronDown,
   Repeat, Target,
@@ -11,6 +11,7 @@ import {
   getWeekDatesContaining,
   getWeekdayShortLabels,
 } from '../utils/habitHelpers';
+import PeriodicEntryEditModal from './PeriodicEntryEditModal';
 
 interface HabitsTabProps {
   habits: Habit[];
@@ -149,49 +150,11 @@ function PeriodicHabitCard({
   const savedText = currentEntry?.text || '';
   const [draft, setDraft] = useState(savedText);
   const [historyOpen, setHistoryOpen] = useState(false);
-  const draftRef = useRef(draft);
-  const savedTextRef = useRef(savedText);
-  const debounceRef = useRef<number | null>(null);
-
-  draftRef.current = draft;
-  savedTextRef.current = savedText;
+  const [editorOpen, setEditorOpen] = useState(false);
 
   useEffect(() => {
     setDraft(savedText);
   }, [savedText, periodKey]);
-
-  const persistIfChanged = (text: string) => {
-    const trimmed = text.trim();
-    const saved = savedTextRef.current.trim();
-    if (trimmed === saved) return;
-    if (!trimmed && !saved) return;
-    onSaveEntry(trimmed);
-  };
-
-  const flushPendingSave = () => {
-    if (debounceRef.current) {
-      window.clearTimeout(debounceRef.current);
-      debounceRef.current = null;
-    }
-    persistIfChanged(draftRef.current);
-  };
-
-  const scheduleSave = (text: string) => {
-    if (debounceRef.current) window.clearTimeout(debounceRef.current);
-    debounceRef.current = window.setTimeout(() => {
-      debounceRef.current = null;
-      persistIfChanged(text);
-    }, 600);
-  };
-
-  useEffect(() => {
-    return () => {
-      if (debounceRef.current) {
-        window.clearTimeout(debounceRef.current);
-        persistIfChanged(draftRef.current);
-      }
-    };
-  }, []);
 
   const color = habit.color || 'green';
 
@@ -225,19 +188,34 @@ function PeriodicHabitCard({
         <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-2">
           {periodLabel}
         </p>
-        <textarea
-          value={draft}
-          onChange={e => {
-            const next = e.target.value;
-            setDraft(next);
-            scheduleSave(next);
-          }}
-          onBlur={flushPendingSave}
-          placeholder="Что сделала в этом периоде?"
-          rows={2}
-          className="w-full bg-transparent text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none resize-none leading-relaxed"
-        />
+        <button
+          type="button"
+          onClick={() => setEditorOpen(true)}
+          className="w-full text-left rounded-xl px-1 py-1 -mx-1 hover:bg-black/[0.03] transition-colors min-h-[3.25rem]"
+        >
+          {draft.trim() ? (
+            <p className="text-sm text-slate-800 leading-relaxed line-clamp-3 whitespace-pre-wrap break-words">
+              {draft}
+            </p>
+          ) : (
+            <p className="text-sm text-slate-400 leading-relaxed">
+              Что сделала в этом периоде? Нажмите, чтобы записать…
+            </p>
+          )}
+        </button>
       </div>
+
+      <PeriodicEntryEditModal
+        isOpen={editorOpen}
+        onClose={() => setEditorOpen(false)}
+        habitTitle={habit.title}
+        periodLabel={periodLabel}
+        initialText={draft}
+        onSave={(text) => {
+          setDraft(text);
+          onSaveEntry(text);
+        }}
+      />
 
       {pastEntries.length > 0 && (
         <div className="mt-3">
