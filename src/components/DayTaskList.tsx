@@ -1,12 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { Reorder, useDragControls } from 'motion/react';
-import {
-  CheckCircle2, Circle, Clock, Edit2, Trash2, GripVertical,
-} from 'lucide-react';
+import { CheckCircle2, Circle, Clock, Trash2, GripVertical } from 'lucide-react';
 import { Task } from '../types';
-import { getTaskBgClass, getTaskBorderLeftClass } from '../utils/themeHelpers';
+import { getTaskBgClass, getTaskBorderLeftClass, getDotBgClass, getTextThemeClass } from '../utils/themeHelpers';
 import { isTaskCompletedOnDate } from '../utils/taskHelpers';
-import TaskColorBadge from './TaskColorBadge';
+import { getTaskColorHint } from '../utils/taskColorHints';
 
 interface DayTaskListProps {
   tasks: Task[];
@@ -36,6 +34,7 @@ function DayTaskRow({
   const controls = useDragControls();
   const isCompleted = isTaskCompletedOnDate(task, selectedDate);
   const color = task.color || defaultColor;
+  const hint = getTaskColorHint(color);
 
   return (
     <Reorder.Item
@@ -44,10 +43,10 @@ function DayTaskRow({
       dragControls={controls}
       layout="position"
       transition={{ type: 'spring', stiffness: 420, damping: 32 }}
-      className={`flex items-center justify-between px-3.5 py-2 rounded-2xl border group cursor-pointer list-none ${
+      className={`group flex items-center gap-1 rounded-2xl border list-none cursor-pointer px-2 py-1.5 ${
         isCompleted
-          ? 'bg-slate-50/30 border-slate-100 border-l-4 border-l-slate-300 text-slate-400 line-through opacity-80'
-          : `border-slate-100 border-l-4 hover:shadow-md ${getTaskBgClass(color)} ${getTaskBorderLeftClass(color)}`
+          ? 'border-slate-100 border-l-[3px] border-l-slate-300 bg-slate-50/30 text-slate-400 line-through opacity-80'
+          : `border-slate-100 border-l-[3px] hover:shadow-md ${getTaskBgClass(color)} ${getTaskBorderLeftClass(color)}`
       } ${!isCompleted ? 'shadow-sm' : ''}`}
       whileDrag={{
         scale: 1.02,
@@ -59,63 +58,57 @@ function DayTaskRow({
         if (!target.closest('button')) onEdit(task);
       }}
     >
-      <div className="flex min-w-0 flex-1 items-center gap-2 pr-2">
-        <button
-          type="button"
-          onPointerDown={(e) => controls.start(e)}
-          className="shrink-0 touch-none rounded-lg p-1 text-slate-300 transition-colors hover:bg-black/5 hover:text-slate-500 active:cursor-grabbing cursor-grab"
-          data-no-tab-swipe
-          aria-label="Перетащить задачу"
-        >
-          <GripVertical size={16} />
-        </button>
+      <button
+        type="button"
+        onPointerDown={(e) => controls.start(e)}
+        className="-ml-0.5 shrink-0 touch-none cursor-grab rounded p-0.5 text-slate-300 transition-colors hover:text-slate-500 active:cursor-grabbing"
+        data-no-tab-swipe
+        aria-label="Перетащить задачу"
+      >
+        <GripVertical size={14} strokeWidth={2} />
+      </button>
 
-        <button
-          type="button"
-          onClick={() => onToggleComplete(task.id)}
-          className="shrink-0 border-0 bg-transparent p-0.5 text-slate-400 transition-colors hover:text-[#6D9773]"
-        >
-          {isCompleted ? (
-            <CheckCircle2 size={19} className="text-[#6D9773]" />
-          ) : (
-            <Circle size={19} className="text-slate-300 hover:text-[#6D9773]/80" />
-          )}
-        </button>
+      <button
+        type="button"
+        onClick={() => onToggleComplete(task.id)}
+        className="shrink-0 border-0 bg-transparent p-0 leading-none text-slate-400 transition-colors hover:text-[#6D9773]"
+        aria-label={isCompleted ? 'Снять отметку' : 'Отметить выполненной'}
+        title={hint && !isCompleted ? hint.label : undefined}
+      >
+        {isCompleted ? (
+          <CheckCircle2 size={16} className="text-[#6D9773]" />
+        ) : hint ? (
+          <span
+            className={`inline-flex h-4 w-4 items-center justify-center rounded-full font-bold leading-none ring-1 ring-black/10 ${getDotBgClass(color)} ${getTextThemeClass(color)}`}
+          >
+            {hint.letter}
+          </span>
+        ) : (
+          <Circle size={16} className="text-slate-300 hover:text-[#6D9773]/80" />
+        )}
+      </button>
 
-        <div className="min-w-0 flex-1 leading-tight">
-          <p className="flex min-w-0 items-center gap-1.5 truncate text-sm font-medium">
-            {!isCompleted && <TaskColorBadge color={color} />}
-            <span className="truncate">{task.title}</span>
-          </p>
-          {task.time && (
-            <div className="mt-1 flex items-center gap-1.5 text-[10px] text-slate-400">
-              <span className="flex items-center gap-1 rounded-md border border-amber-100 bg-amber-50 px-1.5 py-0.5 text-[10px] font-semibold tracking-wide text-amber-700">
-                <Clock size={11} className="shrink-0 text-amber-600" />
-                <span>{task.time}</span>
-              </span>
-            </div>
-          )}
-        </div>
+      <div className="min-w-0 flex-1 leading-tight">
+        <p className="truncate text-sm font-medium">{task.title}</p>
+        {task.time && (
+          <div className="mt-0.5 flex items-center text-[10px] text-slate-400">
+            <span className="flex items-center gap-0.5 rounded border border-amber-100 bg-amber-50 px-1 py-px text-[9px] font-semibold text-amber-700">
+              <Clock size={10} className="shrink-0 text-amber-600" />
+              <span>{task.time}</span>
+            </span>
+          </div>
+        )}
       </div>
 
-      <div className="flex items-center gap-1">
-        <button
-          type="button"
-          onClick={() => onEdit(task)}
-          className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-[#6D9773]/10 hover:text-[#6D9773]"
-          title="Редактировать"
-        >
-          <Edit2 size={14} />
-        </button>
-        <button
-          type="button"
-          onClick={() => onDelete(task.id)}
-          className="rounded-lg bg-red-50 p-1.5 text-red-500 transition-colors hover:bg-red-100"
-          title="Удалить"
-        >
-          <Trash2 size={14} />
-        </button>
-      </div>
+      <button
+        type="button"
+        onClick={() => onDelete(task.id)}
+        className="shrink-0 rounded-md p-1 text-red-400 opacity-60 transition-all hover:bg-red-50 hover:text-red-500 group-hover:opacity-100"
+        title="Удалить"
+        aria-label="Удалить"
+      >
+        <Trash2 size={13} />
+      </button>
     </Reorder.Item>
   );
 }
@@ -145,7 +138,7 @@ export default function DayTaskList({
       axis="y"
       values={orderedTasks}
       onReorder={handleReorder}
-      className="mt-2.5 flex list-none flex-col gap-2.5"
+      className="mt-2.5 flex list-none flex-col gap-2"
     >
       {orderedTasks.map((task) =>
         React.createElement(DayTaskRow, {

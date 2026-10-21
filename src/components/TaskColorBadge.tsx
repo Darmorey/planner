@@ -4,7 +4,7 @@ import { getTaskColorHint } from '../utils/taskColorHints';
 
 interface TaskColorBadgeProps {
   color: string;
-  size?: 'sm' | 'md';
+  size?: 'xs' | 'sm' | 'md';
   className?: string;
 }
 
@@ -17,9 +17,11 @@ export default function TaskColorBadge({
   if (!hint) return null;
 
   const dim =
-    size === 'sm'
-      ? 'h-5 w-5 text-[10px]'
-      : 'h-6 w-6 text-xs';
+    size === 'xs'
+      ? 'h-4 w-4 text-[9px]'
+      : size === 'sm'
+        ? 'h-5 w-5 text-[10px]'
+        : 'h-6 w-6 text-xs';
 
   return (
     <span
