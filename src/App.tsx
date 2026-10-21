@@ -35,6 +35,7 @@ import {
   parsePlannerBackup,
 } from './utils/backupHelpers';
 import { noteOrderFromNotes, syncNoteOrder } from './utils/noteHelpers';
+import { FULFILLED_WISHLIST_CATEGORY, isActiveWish, isFulfilledWish } from './utils/wishlistHelpers';
 
 import { ThemeId, isThemeId, getDefaultTaskColor } from './utils/themeTypes';
 
@@ -623,6 +624,28 @@ export default function App() {
               completedDates: [...currentCompletes, dateStr]
             };
           }
+        } else if (t.isWishlist) {
+          const markingDone = !t.completed;
+          if (markingDone) {
+            const prevCat = t.wishlistCategory === FULFILLED_WISHLIST_CATEGORY
+              ? (t.wishlistCategoryBeforeFulfilled || 'Одежда')
+              : (t.wishlistCategory || 'Одежда');
+            return {
+              ...t,
+              completed: true,
+              wishlistCategoryBeforeFulfilled: prevCat,
+              wishlistCategory: FULFILLED_WISHLIST_CATEGORY,
+            };
+          }
+          const restoreCat = t.wishlistCategoryBeforeFulfilled
+            || (t.wishlistCategory !== FULFILLED_WISHLIST_CATEGORY ? t.wishlistCategory : undefined)
+            || 'Одежда';
+          return {
+            ...t,
+            completed: false,
+            wishlistCategory: restoreCat,
+            wishlistCategoryBeforeFulfilled: undefined,
+          };
         } else {
           return { ...t, completed: !t.completed };
         }
@@ -913,6 +936,8 @@ export default function App() {
 
   // Wishlist list
   const wishlistTasks = tasks.filter(task => !!task.isWishlist);
+  const activeWishlistTasks = wishlistTasks.filter(isActiveWish);
+  const fulfilledWishlistTasks = wishlistTasks.filter(isFulfilledWish);
 
   // Predefined/custom wishlist categories and their colors
   const wishlistCategories = (() => {
@@ -929,10 +954,11 @@ export default function App() {
     ];
   })();
 
-  // Group wishlist tasks by category
+  // Group active wishlist tasks by category
   const groupedWishes: { [key: string]: Task[] } = {};
-  wishlistTasks.forEach(task => {
+  activeWishlistTasks.forEach(task => {
     const cat = task.wishlistCategory || 'Одежда';
+    if (cat === FULFILLED_WISHLIST_CATEGORY) return;
     if (!groupedWishes[cat]) {
       groupedWishes[cat] = [];
     }
@@ -943,7 +969,9 @@ export default function App() {
   const orderedWishlistCategoryNames = [
     ...wishlistCategories.map((c: any) => c.name),
     ...Object.keys(groupedWishes).filter(name => !wishlistCategories.some((c: any) => c.name === name))
-  ].filter(name => groupedWishes[name] && groupedWishes[name].length > 0);
+  ]
+    .filter(name => name !== FULFILLED_WISHLIST_CATEGORY)
+    .filter(name => groupedWishes[name] && groupedWishes[name].length > 0);
 
   // Gifts list
   const giftsTasks = tasks.filter(task => !!task.isGift);
@@ -1556,7 +1584,8 @@ export default function App() {
           {/* WISHLIST TAB */}
           {currentTab === 'wishlist' && (
             <WishlistTab
-              wishlistTasks={wishlistTasks}
+              wishlistTasks={activeWishlistTasks}
+              fulfilledWishlistTasks={fulfilledWishlistTasks}
               wishlistCategories={wishlistCategories}
               groupedWishes={groupedWishes}
               orderedWishlistCategoryNames={orderedWishlistCategoryNames}

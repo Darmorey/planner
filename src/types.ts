@@ -21,6 +21,8 @@ export interface Task {
   isWishlist?: boolean; // if true, belongs to the Wishlist tab
   isGift?: boolean; // if true, belongs to the Gifts tab
   wishlistCategory?: string; // Custom category for wishlist items (e.g., Одежда, Дом, Хобби)
+  /** Original category before marking wish as fulfilled */
+  wishlistCategoryBeforeFulfilled?: string;
   giftRecipient?: string; // Custom recipient/person for gifts (e.g., Папа, Мама, Лёша, Бабушка)
   somedayCategory?: string; // Custom category for someday tasks (e.g., Идеи, Планы, Покупки, Разное)
   notes?: string;

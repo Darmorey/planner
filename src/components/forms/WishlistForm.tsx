@@ -11,6 +11,7 @@ import {
   normalizeExternalUrl,
 } from './formHelpers';
 import { ThemeId, getDefaultTaskColor } from '../../utils/themeTypes';
+import { FULFILLED_WISHLIST_CATEGORY } from '../../utils/wishlistHelpers';
 
 interface WishlistFormProps {
   isOpen: boolean;
@@ -64,6 +65,7 @@ export default function WishlistForm({
   const handleAddNewCategory = () => {
     const trimmed = newCatName.trim();
     if (!trimmed) return;
+    if (trimmed === FULFILLED_WISHLIST_CATEGORY) return;
     if (wishlistCategories.some(c => c.name.toLowerCase() === trimmed.toLowerCase())) {
       const match = wishlistCategories.find(c => c.name.toLowerCase() === trimmed.toLowerCase())!;
       setSelectedWishlistCategory(match.name);
@@ -217,7 +219,7 @@ export default function WishlistForm({
                         {wishlistCategories.length === 0 ? (
                           <div className="p-3 text-xs text-slate-400 text-center font-medium">Нет доступных категорий</div>
                         ) : (
-                          wishlistCategories.map(cat => {
+                          wishlistCategories.filter(cat => cat.name !== FULFILLED_WISHLIST_CATEGORY).map(cat => {
                             const itemStyles = getStyleByColor(cat.color);
                             const isSelected = cat.name === selectedWishlistCategory;
                             const isEditing = editingWishlistCat === cat.name;
