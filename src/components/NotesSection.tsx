@@ -101,7 +101,10 @@ export default function NotesSection({
   }, [notes, selectedDate, noteOrder]);
 
   return (
-    <div className={`${styles.outerBg} rounded-2xl p-4 border ${styles.borderColor}`}>
+    <div
+      className={`${styles.outerBg} rounded-2xl p-4 border ${styles.borderColor}`}
+      data-no-tab-swipe
+    >
       <div className="flex items-center justify-between mb-3">
         <button
           onClick={onOpenStorage}
@@ -129,7 +132,8 @@ export default function NotesSection({
       ) : (
         <div
           ref={scrollRef}
-          className="flex gap-3 overflow-x-auto scrollbar-none snap-x snap-mandatory pt-1 pb-1 scroll-smooth select-none cursor-grab active:cursor-grabbing"
+          data-no-tab-swipe
+          className="flex gap-3 overflow-x-auto scrollbar-none snap-x snap-mandatory pt-1 pb-1 scroll-smooth select-none cursor-grab active:cursor-grabbing touch-pan-x"
         >
           {dayNotes.map(note => (
             <button
