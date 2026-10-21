@@ -7,6 +7,7 @@ export const PLANNER_STORAGE_KEYS = [
   'planner_notes',
   'planner_habits',
   'planner_day_task_order',
+  'planner_notes_order',
   'task_calendar_theme',
   'someday_categories_custom',
   'wishlist_categories_custom',

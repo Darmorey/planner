@@ -64,28 +64,6 @@ export const getDotBgClass = (colorVal: string) => {
   }
 };
 
-export const getBorderThemeClass = (colorVal: string) => {
-  switch (colorVal) {
-    case 'red': return 'border-[#D9ABC3]/30';
-    case 'green': return 'border-[#C3D9AB]/35';
-    case 'purple': return 'border-[#C3ABD9]/30';
-    case 'orange': return 'border-[#EED0AC]/30';
-    case 'blue': return 'border-[#ABC3D9]/30';
-    case 'dark': return 'border-[#ABD9D1]/30';
-    case 'darkGreen': return 'border-[#ABD9D1]/30';
-    case 'mossGreen': return 'border-[#C3D9AB]/35';
-    case 'beige': return 'border-[#EED0AC]/30';
-    case 'rosyBrown': return 'border-[#D9ABC3]/30';
-    case 'midnightGreen': return 'border-[#ABD9D1]/30';
-    case 'spaceCadet': return 'border-[#C3ABD9]/30';
-    case 'slateGray': return 'border-[#ABC3D9]/30';
-    case 'tan': return 'border-[#EED0AC]/30';
-    case 'coffee': return 'border-[#EED0AC]/30';
-    case 'caputMortuum': return 'border-[#D9ABC3]/30';
-    default: return 'border-[#ABC3D9]/30';
-  }
-};
-
 export const getTextThemeClass = (colorVal: string) => {
   switch (colorVal) {
     case 'red': return 'text-[#7A4060]';

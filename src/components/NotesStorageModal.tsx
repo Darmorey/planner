@@ -1,17 +1,23 @@
-import React, { useState } from 'react';
-import { ChevronLeft, MoreHorizontal, Search, Plus, Trash2, Calendar, FileText } from 'lucide-react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Reorder, useDragControls } from 'motion/react';
+import {
+  ChevronLeft, MoreHorizontal, Search, Plus, Trash2, Calendar, FileText, GripVertical,
+} from 'lucide-react';
 import { DayNote } from '../types';
 import { parseLocalDate } from '../utils/taskHelpers';
+import { sortNotesByCustomOrder } from '../utils/noteHelpers';
 import { ThemeId } from '../utils/themeTypes';
 
 interface NotesStorageModalProps {
   isOpen: boolean;
   onClose: () => void;
   notes: DayNote[];
+  noteOrder: string[];
   theme: ThemeId;
   onAddNote: () => void;
   onEditNote: (note: DayNote) => void;
   onDeleteNote: (id: string) => void;
+  onReorderNotes: (orderIds: string[]) => void;
 }
 
 interface StorageStyles {
@@ -123,45 +129,148 @@ const themeStorageStyles: Record<ThemeId, StorageStyles> = {
   },
 };
 
+function formatNoteDate(dateStr?: string): string {
+  if (!dateStr) return 'Каждый день';
+  try {
+    const d = parseLocalDate(dateStr);
+    const months = [
+      'января', 'февраля', 'марта', 'апреля', 'мая', 'июня',
+      'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря',
+    ];
+    return `${d.getDate()} ${months[d.getMonth()]}`;
+  } catch {
+    return dateStr;
+  }
+}
+
+function NoteReorderRow({
+  note,
+  styles,
+  onEditNote,
+  onDeleteNote,
+}: {
+  note: DayNote;
+  styles: StorageStyles;
+  onEditNote: (note: DayNote) => void;
+  onDeleteNote: (id: string) => void;
+}) {
+  const controls = useDragControls();
+
+  return (
+    <Reorder.Item
+      value={note}
+      dragListener={false}
+      dragControls={controls}
+      layout="position"
+      transition={{ type: 'spring', stiffness: 420, damping: 32 }}
+      className={`${styles.noteCardBg} list-none rounded-3xl border ${styles.cardBorder} ${styles.noteCardHoverBorder} shadow-sm`}
+      whileDrag={{
+        scale: 1.02,
+        boxShadow: '0 12px 28px rgba(15, 23, 42, 0.14)',
+        zIndex: 20,
+      }}
+    >
+      <div className="flex items-stretch gap-1">
+        <button
+          type="button"
+          onPointerDown={(e) => controls.start(e)}
+          className="shrink-0 touch-none rounded-l-3xl px-2 text-slate-300 transition-colors hover:bg-black/5 hover:text-slate-500 active:cursor-grabbing cursor-grab"
+          data-no-tab-swipe
+          aria-label="Перетащить заметку"
+        >
+          <GripVertical size={18} />
+        </button>
+
+        <div
+          role="button"
+          tabIndex={0}
+          onClick={() => onEditNote(note)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') onEditNote(note);
+          }}
+          className="min-w-0 flex-1 cursor-pointer p-4 pl-0 active:scale-[0.99] transition-transform"
+        >
+          <div className="flex justify-between items-start mb-2 gap-2">
+            <h3 className={`font-bold text-[15px] ${styles.titleText} tracking-tight leading-snug break-words line-clamp-2`}>
+              {note.title || 'Без названия'}
+            </h3>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                if (window.confirm('Вы действительно хотите удалить эту заметку?')) {
+                  onDeleteNote(note.id);
+                }
+              }}
+              className={`p-1 hover:bg-black/5 ${styles.mutedIcon} hover:text-red-500 rounded-full transition-all shrink-0`}
+              title="Удалить заметку"
+            >
+              <Trash2 size={13} />
+            </button>
+          </div>
+
+          <p className={`text-[13px] ${styles.bodyText} leading-relaxed font-normal whitespace-pre-wrap break-words line-clamp-4`}>
+            {note.content}
+          </p>
+
+          <div className={`mt-3 pt-2 border-t ${styles.divider} flex items-center gap-1.5 text-[10px] font-semibold ${styles.noteDateColor} uppercase tracking-wider select-none`}>
+            <Calendar size={10} className="opacity-70" />
+            <span>{formatNoteDate(note.date)}</span>
+          </div>
+        </div>
+      </div>
+    </Reorder.Item>
+  );
+}
+
 export default function NotesStorageModal({
   isOpen,
   onClose,
   notes,
+  noteOrder,
   theme,
   onAddNote,
   onEditNote,
-  onDeleteNote
+  onDeleteNote,
+  onReorderNotes,
 }: NotesStorageModalProps) {
   const [searchQuery, setSearchQuery] = useState('');
-
-  if (!isOpen) return null;
-
-  const formatNoteDate = (dateStr?: string): string => {
-    if (!dateStr) return 'Каждый день';
-    try {
-      const d = parseLocalDate(dateStr);
-      const months = [
-        'января', 'февраля', 'марта', 'апреля', 'мая', 'июня',
-        'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'
-      ];
-      return `${d.getDate()} ${months[d.getMonth()]}`;
-    } catch {
-      return dateStr;
-    }
-  };
-
-  const filteredNotes = notes.filter(note => {
-    const titleMatch = (note.title || '').toLowerCase().includes(searchQuery.toLowerCase());
-    const contentMatch = (note.content || '').toLowerCase().includes(searchQuery.toLowerCase());
-    return titleMatch || contentMatch;
-  });
-
-  const leftColNotes = filteredNotes.filter((_, idx) => idx % 2 === 0);
-  const rightColNotes = filteredNotes.filter((_, idx) => idx % 2 !== 0);
+  const [orderedNotes, setOrderedNotes] = useState<DayNote[]>([]);
 
   const styles = themeStorageStyles[theme] || themeStorageStyles.standard;
 
-  const renderNoteCard = (note: DayNote) => (
+  const sortedAllNotes = useMemo(
+    () => sortNotesByCustomOrder(notes, noteOrder),
+    [notes, noteOrder],
+  );
+
+  useEffect(() => {
+    if (!isOpen) setSearchQuery('');
+  }, [isOpen]);
+
+  useEffect(() => {
+    setOrderedNotes(sortedAllNotes);
+  }, [sortedAllNotes]);
+
+  if (!isOpen) return null;
+
+  const filteredNotes = sortedAllNotes.filter(note => {
+    const q = searchQuery.toLowerCase();
+    const titleMatch = (note.title || '').toLowerCase().includes(q);
+    const contentMatch = (note.content || '').toLowerCase().includes(q);
+    return titleMatch || contentMatch;
+  });
+
+  const isSearchActive = searchQuery.trim().length > 0;
+  const leftColNotes = filteredNotes.filter((_, idx) => idx % 2 === 0);
+  const rightColNotes = filteredNotes.filter((_, idx) => idx % 2 !== 0);
+
+  const handleReorder = (next: DayNote[]) => {
+    setOrderedNotes(next);
+    onReorderNotes(next.map(n => n.id));
+  };
+
+  const renderSearchCard = (note: DayNote) => (
     <div
       key={note.id}
       onClick={() => onEditNote(note)}
@@ -240,6 +349,12 @@ export default function NotesStorageModal({
           />
         </div>
 
+        {!isSearchActive && sortedAllNotes.length > 0 && (
+          <p className={`text-[11px] ${styles.noteDateColor} text-center`}>
+            Удерживайте ⋮⋮ и перетащите — порядок сохранится на главном экране
+          </p>
+        )}
+
         {filteredNotes.length === 0 ? (
           <div className="flex flex-col items-center justify-center pt-20 text-center space-y-3">
             <FileText size={48} className={`${styles.mutedIcon} animate-pulse`} />
@@ -248,11 +363,28 @@ export default function NotesStorageModal({
               {searchQuery ? 'Заметок по этому запросу не найдено.' : 'Создайте свою первую заметку, нажав на кнопку «+» внизу!'}
             </p>
           </div>
-        ) : (
+        ) : isSearchActive ? (
           <div className="grid grid-cols-2 gap-3.5 items-start">
-            <div className="space-y-3.5">{leftColNotes.map(renderNoteCard)}</div>
-            <div className="space-y-3.5">{rightColNotes.map(renderNoteCard)}</div>
+            <div className="space-y-3.5">{leftColNotes.map(renderSearchCard)}</div>
+            <div className="space-y-3.5">{rightColNotes.map(renderSearchCard)}</div>
           </div>
+        ) : (
+          <Reorder.Group
+            axis="y"
+            values={orderedNotes}
+            onReorder={handleReorder}
+            className="flex list-none flex-col gap-3.5"
+          >
+            {orderedNotes.map(note =>
+              React.createElement(NoteReorderRow, {
+                key: note.id,
+                note,
+                styles,
+                onEditNote,
+                onDeleteNote,
+              })
+            )}
+          </Reorder.Group>
         )}
       </div>
 

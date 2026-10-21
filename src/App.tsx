@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
-  Plus, Calendar as CalendarIcon, Check, ListTodo, Gift, 
-  ExternalLink, LogIn, RefreshCw, Eye, EyeOff, LayoutGrid, Clock,
-  MapPin, ChevronLeft, ChevronRight, ChevronDown, CheckCircle2, Circle, Trash2, Edit2, Bookmark, Heart, FileText, Sparkles, Settings, X, Repeat
+  Plus, Calendar as CalendarIcon, Gift, 
+  Eye, EyeOff, Clock,
+  ChevronLeft, ChevronRight, ChevronDown, CheckCircle2, Circle, Trash2, Edit2, Bookmark, Heart, Settings, X, Repeat
 } from 'lucide-react';
 import { Task, DayNote, Habit } from './types';
-import { doesTaskOccurOnDate, calculateFreeTime, getDaysDifference, parseLocalDate, formatLocalDate, compareTasksByTime, calculateEndTime, isTaskCompletedOnDate, sortTasksByCustomOrder } from './utils/taskHelpers';
+import { doesTaskOccurOnDate, calculateFreeTime, parseLocalDate, formatLocalDate, compareTasksByTime, calculateEndTime, isTaskCompletedOnDate, sortTasksByCustomOrder } from './utils/taskHelpers';
 import { INITIAL_TASKS, INITIAL_NOTES, INITIAL_HABITS } from './utils/initialData';
 import MonthCalendar from './components/MonthCalendar';
 import TaskForm from './components/TaskForm';
@@ -19,8 +19,6 @@ import {
   getTaskBgClass, 
   getTaskBorderLeftClass, 
   getDotBgClass, 
-  getBorderThemeClass, 
-  getTextThemeClass 
 } from './utils/themeHelpers';
 import SomedayTab from './components/SomedayTab';
 import WishlistTab from './components/WishlistTab';
@@ -36,6 +34,7 @@ import {
   getBackupStats,
   parsePlannerBackup,
 } from './utils/backupHelpers';
+import { noteOrderFromNotes, syncNoteOrder } from './utils/noteHelpers';
 
 import { ThemeId, isThemeId, getDefaultTaskColor } from './utils/themeTypes';
 
@@ -264,8 +263,6 @@ export default function App() {
   const [isTaskFormOpen, setIsTaskFormOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [inlineEditingId, setInlineEditingId] = useState<string | null>(null);
-
   // Collapsed sections for Wishlist & Gifts & Someday
   const [collapsedWishes, setCollapsedWishes] = useState<Record<string, boolean>>({});
   const [collapsedGifts, setCollapsedGifts] = useState<Record<string, boolean>>({});
@@ -299,6 +296,19 @@ export default function App() {
     } catch {
       return {};
     }
+  });
+
+  const [noteOrder, setNoteOrder] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem('planner_notes_order');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) return parsed;
+      }
+    } catch {
+      // ignore
+    }
+    return [];
   });
 
   const handleExportBackup = () => {
@@ -440,6 +450,22 @@ export default function App() {
     localStorage.setItem('planner_day_task_order', JSON.stringify(dayTaskOrders));
   }, [dayTaskOrders]);
 
+  useEffect(() => {
+    localStorage.setItem('planner_notes_order', JSON.stringify(noteOrder));
+  }, [noteOrder]);
+
+  useEffect(() => {
+    setNoteOrder(prev => {
+      const synced = syncNoteOrder(prev, notes);
+      if (synced.length === 0 && notes.length > 0) {
+        return noteOrderFromNotes(notes);
+      }
+      return synced.length === prev.length && synced.every((id, i) => id === prev[i])
+        ? prev
+        : synced;
+    });
+  }, [notes]);
+
   // --- OVERDUE UNTIMED TASKS ROLLOVER ---
   useEffect(() => {
     setTasks(prev => {
@@ -524,17 +550,6 @@ export default function App() {
       'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'
     ];
     return monthsGenitive[date.getMonth()];
-  };
-
-  const navigateDays = (days: number) => {
-    if (days > 0) {
-      setSlideDirection('left');
-    } else if (days < 0) {
-      setSlideDirection('right');
-    }
-    const date = parseLocalDate(selectedDate);
-    date.setDate(date.getDate() + days);
-    setSelectedDate(formatLocalDate(date));
   };
 
   /** Jump to Monday of previous/next week */
@@ -717,30 +732,33 @@ export default function App() {
   // --- REAL-TIME NOTES ACTIONS ---
   const handleSaveNote = (noteData: { id?: string; title: string; content: string; date?: string }) => {
     const normalizedDate = noteData.date?.trim() || undefined;
-    setNotes(prev => {
-      if (noteData.id) {
-        // Edit existing
-        return prev.map(n => n.id === noteData.id ? { 
-          ...n, 
-          title: noteData.title, 
-          content: noteData.content, 
-          date: normalizedDate 
-        } : n);
-      } else {
-        // Create new
-        const newNote: DayNote = {
-          id: `note-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-          title: noteData.title,
-          content: noteData.content,
-          date: normalizedDate,
-          createdAt: Date.now()
-        };
-        return [...prev, newNote];
-      }
-    });
+    if (noteData.id) {
+      setNotes(prev => prev.map(n => n.id === noteData.id ? {
+        ...n,
+        title: noteData.title,
+        content: noteData.content,
+        date: normalizedDate,
+      } : n));
+      return;
+    }
+
+    const newNote: DayNote = {
+      id: `note-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      title: noteData.title,
+      content: noteData.content,
+      date: normalizedDate,
+      createdAt: Date.now(),
+    };
+    setNotes(prev => [...prev, newNote]);
+    setNoteOrder(order => [...order.filter(oid => oid !== newNote.id), newNote.id]);
+  };
+
+  const handleReorderNotes = (orderIds: string[]) => {
+    setNoteOrder(orderIds);
   };
 
   const handleDeleteNote = (id: string) => {
+    setNoteOrder(prev => prev.filter(oid => oid !== id));
     setNotes(prev => prev.filter(n => n.id !== id));
     if (editingNote?.id === id) {
       setEditingNote(null);
@@ -1490,6 +1508,7 @@ export default function App() {
               <NotesSection
                 selectedDate={selectedDate}
                 notes={notes}
+                noteOrder={noteOrder}
                 theme={theme}
                 onAddNote={() => {
                   setEditingNote(null);
@@ -1686,6 +1705,7 @@ export default function App() {
         isOpen={isNotesStorageOpen}
         onClose={() => setIsNotesStorageOpen(false)}
         notes={notes}
+        noteOrder={noteOrder}
         theme={theme}
         onAddNote={() => {
           setEditingNote(null);
@@ -1696,6 +1716,7 @@ export default function App() {
           setIsNoteEditOpen(true);
         }}
         onDeleteNote={handleDeleteNote}
+        onReorderNotes={handleReorderNotes}
       />
 
       <NoteEditModal

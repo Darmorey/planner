@@ -1,11 +1,13 @@
-import React, { useRef } from 'react';
+import React, { useMemo, useRef } from 'react';
 import { Plus, Check, FileText } from 'lucide-react';
 import { DayNote } from '../types';
+import { sortNotesByCustomOrder } from '../utils/noteHelpers';
 import { ThemeId } from '../utils/themeTypes';
 
 interface NotesSectionProps {
   selectedDate: string;
   notes: DayNote[];
+  noteOrder: string[];
   theme: ThemeId;
   onAddNote: () => void;
   onEditNote: (note: DayNote) => void;
@@ -84,6 +86,7 @@ const themeStylesMap: Record<ThemeId, ThemeStyles> = {
 export default function NotesSection({
   selectedDate,
   notes,
+  noteOrder,
   theme,
   onAddNote,
   onEditNote,
@@ -92,15 +95,10 @@ export default function NotesSection({
   const scrollRef = useRef<HTMLDivElement>(null);
   const styles = themeStylesMap[theme] || themeStylesMap.standard;
 
-  const dayNotes = notes
-    .filter(n => !n.date || n.date === selectedDate)
-    .sort((a, b) => {
-      // Day-specific notes first, then everyday notes
-      const aPinned = a.date ? 1 : 0;
-      const bPinned = b.date ? 1 : 0;
-      if (aPinned !== bPinned) return bPinned - aPinned;
-      return b.createdAt - a.createdAt;
-    });
+  const dayNotes = useMemo(() => {
+    const visible = notes.filter(n => !n.date || n.date === selectedDate);
+    return sortNotesByCustomOrder(visible, noteOrder);
+  }, [notes, selectedDate, noteOrder]);
 
   return (
     <div className={`${styles.outerBg} rounded-2xl p-4 border ${styles.borderColor}`}>
