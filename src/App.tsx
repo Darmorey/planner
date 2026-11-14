@@ -307,6 +307,15 @@ export default function App() {
     }
   });
 
+  const [wishlistItemOrders, setWishlistItemOrders] = useState<Record<string, string[]>>(() => {
+    try {
+      const saved = localStorage.getItem('planner_wishlist_item_order');
+      return saved ? JSON.parse(saved) : {};
+    } catch {
+      return {};
+    }
+  });
+
   const [noteOrder, setNoteOrder] = useState<string[]>(() => {
     try {
       const saved = localStorage.getItem('planner_notes_order');
@@ -458,6 +467,10 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem('planner_day_task_order', JSON.stringify(dayTaskOrders));
   }, [dayTaskOrders]);
+
+  useEffect(() => {
+    localStorage.setItem('planner_wishlist_item_order', JSON.stringify(wishlistItemOrders));
+  }, [wishlistItemOrders]);
 
   useEffect(() => {
     localStorage.setItem('planner_notes_order', JSON.stringify(noteOrder));
@@ -938,6 +951,13 @@ export default function App() {
     }));
   };
 
+  const handleReorderWishlistItems = (categoryName: string, ordered: Task[]) => {
+    setWishlistItemOrders((prev) => ({
+      ...prev,
+      [categoryName]: ordered.map((t) => t.id),
+    }));
+  };
+
   // Someday (No Date) tasks list
   const somedayTasks = tasks.filter(task => !task.isWishlist && !task.isGift && !task.date);
 
@@ -992,6 +1012,13 @@ export default function App() {
       groupedWishes[cat] = [];
     }
     groupedWishes[cat].push(task);
+  });
+
+  Object.keys(groupedWishes).forEach((cat) => {
+    groupedWishes[cat] = sortTasksByCustomOrder(
+      groupedWishes[cat],
+      wishlistItemOrders[cat] || []
+    );
   });
 
   const orderedWishlistCategoryNames = orderSectionNamesByCatalog(
@@ -1626,6 +1653,7 @@ export default function App() {
               }}
               onToggleComplete={handleToggleComplete}
               onDeleteTask={handleDeleteTask}
+              onReorderWishlistItems={handleReorderWishlistItems}
               accentBg={t.accentBg}
               accentBgHover={t.accentBgHover}
             />

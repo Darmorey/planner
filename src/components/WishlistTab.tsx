@@ -1,5 +1,17 @@
-import React, { useState } from 'react';
-import { Plus, Gift, ChevronDown, CheckCircle2, Circle, Edit2, Trash2, Sparkles, ExternalLink } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { Reorder, useDragControls } from 'motion/react';
+import {
+  Plus,
+  Gift,
+  ChevronDown,
+  CheckCircle2,
+  Circle,
+  Edit2,
+  Trash2,
+  Sparkles,
+  ExternalLink,
+  GripVertical,
+} from 'lucide-react';
 import { Task } from '../types';
 import { getDotBgClass, getTextThemeClass, getTaskBgClass } from '../utils/themeHelpers';
 import CategoryQuickAdd from './CategoryQuickAdd';
@@ -18,6 +30,7 @@ interface WishlistTabProps {
   onEditTask: (task: Task) => void;
   onToggleComplete: (taskId: string) => void;
   onDeleteTask: (taskId: string) => void;
+  onReorderWishlistItems: (categoryName: string, ordered: Task[]) => void;
   accentBg: string;
   accentBgHover: string;
 }
@@ -29,6 +42,7 @@ function WishRow({
   onToggleComplete,
   onDeleteTask,
   fulfilled = false,
+  draggable = false,
 }: {
   task: Task;
   colorVal: string;
@@ -36,24 +50,35 @@ function WishRow({
   onToggleComplete: (taskId: string) => void;
   onDeleteTask: (taskId: string) => void;
   fulfilled?: boolean;
+  draggable?: boolean;
 }) {
-  return (
-    <div
-      onClick={(e) => {
-        const isButton = (e.target as HTMLElement).closest('button');
-        if (!isButton) onEditTask(task);
-      }}
-      className={`relative border px-3.5 py-2 rounded-2xl transition-all flex items-center justify-between group cursor-pointer ${
-        fulfilled
-          ? 'bg-slate-50/50 border-slate-100 text-slate-500'
-          : `${getTaskBgClass(task.color || colorVal)} border-black/5 hover:shadow-md`
-      }`}
-    >
-      <div className="flex items-center gap-3.5 min-w-0 flex-1">
+  const controls = useDragControls();
+
+  const rowClass = `relative flex items-center justify-between rounded-2xl border px-3.5 py-2 transition-all group list-none ${
+    fulfilled
+      ? 'cursor-pointer bg-slate-50/50 border-slate-100 text-slate-500'
+      : `cursor-pointer ${getTaskBgClass(task.color || colorVal)} border-black/5 hover:shadow-md`
+  }`;
+
+  const inner = (
+    <>
+      <div className="flex min-w-0 flex-1 items-center gap-2">
+        {draggable && (
+          <button
+            type="button"
+            onPointerDown={(e) => controls.start(e)}
+            className="shrink-0 touch-none cursor-grab rounded p-0.5 text-slate-300 transition-colors hover:text-slate-500 active:cursor-grabbing"
+            data-no-tab-swipe
+            aria-label="Перетащить желание"
+          >
+            <GripVertical size={14} strokeWidth={2} />
+          </button>
+        )}
+
         <button
           type="button"
           onClick={() => onToggleComplete(task.id)}
-          className="text-slate-300 hover:text-rose-500 transition-colors shrink-0"
+          className="shrink-0 text-slate-300 transition-colors hover:text-rose-500"
         >
           {fulfilled ? (
             <CheckCircle2 size={18} className="text-rose-500" />
@@ -63,11 +88,11 @@ function WishRow({
         </button>
 
         <div className="min-w-0 flex-1">
-          <span className={`text-sm font-bold text-slate-800 ${fulfilled ? 'line-through text-slate-400 font-semibold' : ''}`}>
+          <span className={`text-sm font-bold text-slate-800 ${fulfilled ? 'font-semibold text-slate-400 line-through' : ''}`}>
             {task.title}
           </span>
           {task.notes && (
-            <p className={`text-xs mt-1 italic font-medium leading-relaxed truncate ${fulfilled ? 'text-slate-400' : 'text-slate-500'}`}>
+            <p className={`mt-1 truncate text-xs font-medium italic leading-relaxed ${fulfilled ? 'text-slate-400' : 'text-slate-500'}`}>
               {task.notes}
             </p>
           )}
@@ -77,7 +102,7 @@ function WishRow({
               target="_blank"
               rel="noopener noreferrer"
               onClick={(e) => e.stopPropagation()}
-              className="mt-1 inline-flex items-center gap-1 text-[11px] font-semibold text-sky-600 hover:text-sky-700 hover:underline max-w-full"
+              className="mt-1 inline-flex max-w-full items-center gap-1 text-[11px] font-semibold text-sky-600 hover:text-sky-700 hover:underline"
             >
               <ExternalLink size={11} className="shrink-0" />
               <span className="truncate">{task.link.replace(/^https?:\/\//i, '')}</span>
@@ -86,14 +111,14 @@ function WishRow({
         </div>
       </div>
 
-      <div className="flex gap-1.5 shrink-0 ml-3">
+      <div className="ml-3 flex shrink-0 gap-1.5">
         {task.link && (
           <a
             href={normalizeExternalUrl(task.link)}
             target="_blank"
             rel="noopener noreferrer"
             onClick={(e) => e.stopPropagation()}
-            className="p-1.5 hover:bg-sky-50 text-sky-500 hover:text-sky-700 rounded-lg transition-colors"
+            className="rounded-lg p-1.5 text-sky-500 transition-colors hover:bg-sky-50 hover:text-sky-700"
             title="Открыть ссылку"
             aria-label="Открыть ссылку"
           >
@@ -103,25 +128,107 @@ function WishRow({
         <button
           type="button"
           onClick={() => onEditTask(task)}
-          className="p-1.5 hover:bg-rose-50 text-slate-400 hover:text-rose-600 rounded-lg transition-colors"
+          className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-rose-50 hover:text-rose-600"
         >
           <Edit2 size={13} />
         </button>
         <button
           type="button"
           onClick={() => onDeleteTask(task.id)}
-          className="p-1.5 bg-red-50 hover:bg-red-100 text-red-500 rounded-lg transition-colors"
+          className="rounded-lg bg-red-50 p-1.5 text-red-500 transition-colors hover:bg-red-100"
         >
           <Trash2 size={13} />
         </button>
       </div>
 
       {!fulfilled && (
-        <div className="absolute right-14 top-1.5 opacity-0 group-hover:opacity-10 transition-opacity pointer-events-none">
+        <div className="pointer-events-none absolute right-14 top-1.5 opacity-0 transition-opacity group-hover:opacity-10">
           <Sparkles size={11} className="text-rose-400" />
         </div>
       )}
+    </>
+  );
+
+  const onRowClick = (e: React.MouseEvent) => {
+    const target = e.target as HTMLElement;
+    if (!target.closest('button') && !target.closest('a')) onEditTask(task);
+  };
+
+  if (draggable) {
+    return (
+      <Reorder.Item
+        value={task}
+        dragListener={false}
+        dragControls={controls}
+        layout="position"
+        transition={{ type: 'spring', stiffness: 420, damping: 32 }}
+        className={rowClass}
+        whileDrag={{
+          scale: 1.02,
+          boxShadow: '0 12px 28px rgba(15, 23, 42, 0.14)',
+          zIndex: 20,
+        }}
+        onClick={onRowClick}
+      >
+        {inner}
+      </Reorder.Item>
+    );
+  }
+
+  return (
+    <div onClick={onRowClick} className={rowClass}>
+      {inner}
     </div>
+  );
+}
+
+function WishlistCategoryList({
+  categoryName,
+  tasks,
+  colorVal,
+  onReorder,
+  onEditTask,
+  onToggleComplete,
+  onDeleteTask,
+}: {
+  categoryName: string;
+  tasks: Task[];
+  colorVal: string;
+  onReorder: (categoryName: string, ordered: Task[]) => void;
+  onEditTask: (task: Task) => void;
+  onToggleComplete: (taskId: string) => void;
+  onDeleteTask: (taskId: string) => void;
+}) {
+  const [orderedTasks, setOrderedTasks] = useState(tasks);
+
+  useEffect(() => {
+    setOrderedTasks(tasks);
+  }, [tasks]);
+
+  const handleReorder = (next: Task[]) => {
+    setOrderedTasks(next);
+    onReorder(categoryName, next);
+  };
+
+  return (
+    <Reorder.Group
+      axis="y"
+      values={orderedTasks}
+      onReorder={handleReorder}
+      className="flex list-none flex-col gap-2"
+    >
+      {orderedTasks.map((task) =>
+        React.createElement(WishRow, {
+          key: task.id,
+          task,
+          colorVal,
+          onEditTask,
+          onToggleComplete,
+          onDeleteTask,
+          draggable: true,
+        })
+      )}
+    </Reorder.Group>
   );
 }
 
@@ -138,6 +245,7 @@ const WishlistTab: React.FC<WishlistTabProps> = ({
   onEditTask,
   onToggleComplete,
   onDeleteTask,
+  onReorderWishlistItems,
   accentBg,
   accentBgHover,
 }) => {
@@ -154,19 +262,19 @@ const WishlistTab: React.FC<WishlistTabProps> = ({
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between pt-1 gap-3">
+      <div className="flex items-center justify-between gap-3 pt-1">
         <button
           type="button"
-          onClick={() => setShowFulfilled(v => !v)}
-          className={`text-[10px] sm:text-[11px] italic font-light tracking-wide transition-colors ${
+          onClick={() => setShowFulfilled((v) => !v)}
+          className={`text-[10px] font-light italic tracking-wide transition-colors sm:text-[11px] ${
             showFulfilled
-              ? 'text-rose-600 font-normal'
+              ? 'font-normal text-rose-600'
               : 'text-slate-500 hover:text-rose-500'
           }`}
         >
           {showFulfilled ? '← Актуальные желания' : 'Исполнилось'}
           {!showFulfilled && fulfilledWishlistTasks.length > 0 && (
-            <span className="not-italic font-semibold text-slate-400 ml-1">({fulfilledWishlistTasks.length})</span>
+            <span className="ml-1 font-semibold not-italic text-slate-400">({fulfilledWishlistTasks.length})</span>
           )}
         </button>
 
@@ -175,7 +283,7 @@ const WishlistTab: React.FC<WishlistTabProps> = ({
             type="button"
             onClick={onAddTask}
             title="Добавить"
-            className={`flex items-center justify-center px-3 py-1.5 ${accentBg} ${accentBgHover} text-white font-semibold rounded-xl shadow-md transition-all hover:scale-102 active:scale-98 shrink-0`}
+            className={`flex shrink-0 items-center justify-center rounded-xl px-3 py-1.5 ${accentBg} ${accentBgHover} font-semibold text-white shadow-md transition-all hover:scale-102 active:scale-98`}
           >
             <Plus size={16} strokeWidth={2.5} />
           </button>
@@ -184,13 +292,13 @@ const WishlistTab: React.FC<WishlistTabProps> = ({
 
       {showFulfilled ? (
         fulfilledWishlistTasks.length === 0 ? (
-          <div className="text-center py-12 bg-white rounded-2xl border border-[#D7897F]/20">
-            <Gift size={40} className="mx-auto text-rose-200 mb-3" />
-            <p className="text-slate-400 text-sm font-medium">Пока нет исполненных желаний</p>
+          <div className="rounded-2xl border border-[#D7897F]/20 bg-white py-12 text-center">
+            <Gift size={40} className="mx-auto mb-3 text-rose-200" />
+            <p className="text-sm font-medium text-slate-400">Пока нет исполненных желаний</p>
           </div>
         ) : (
           <div className="space-y-2">
-            {fulfilledWishlistTasks.map(task =>
+            {fulfilledWishlistTasks.map((task) =>
               React.createElement(WishRow, {
                 key: task.id,
                 task,
@@ -204,9 +312,9 @@ const WishlistTab: React.FC<WishlistTabProps> = ({
           </div>
         )
       ) : wishlistTasks.length === 0 ? (
-        <div className="text-center py-12 bg-white rounded-2xl border border-[#D7897F]/20">
-          <Gift size={40} className="mx-auto text-rose-200 mb-3" />
-          <p className="text-slate-400 text-sm font-medium">Ваш список желаний пока пуст. Загадайте что-нибудь!</p>
+        <div className="rounded-2xl border border-[#D7897F]/20 bg-white py-12 text-center">
+          <Gift size={40} className="mx-auto mb-3 text-rose-200" />
+          <p className="text-sm font-medium text-slate-400">Ваш список желаний пока пуст. Загадайте что-нибудь!</p>
         </div>
       ) : (
         <div className="space-y-6">
@@ -220,17 +328,17 @@ const WishlistTab: React.FC<WishlistTabProps> = ({
             const showQuickAdd = quickAddCategory === catName && !isCollapsed;
 
             return (
-              <div key={catName} className="space-y-2.5 animate-fade-in">
+              <div key={catName} className="animate-fade-in space-y-2.5">
                 <div
                   onClick={() => onToggleCollapse(catName)}
-                  className="flex items-center justify-between pb-1 border-b border-rose-100/40 cursor-pointer select-none group/cat"
+                  className="group/cat flex cursor-pointer select-none items-center justify-between border-b border-rose-100/40 pb-1"
                 >
                   <div className="flex items-center gap-2">
-                    <span className={`w-2.5 h-2.5 rounded-full ${dotBg}`} />
-                    <h3 className={`text-base font-extrabold ${textTheme} tracking-wide group-hover/cat:underline decoration-2`}>
+                    <span className={`h-2.5 w-2.5 rounded-full ${dotBg}`} />
+                    <h3 className={`text-base font-extrabold tracking-wide ${textTheme} decoration-2 group-hover/cat:underline`}>
                       {catName}
                     </h3>
-                    <span className="text-[10px] text-slate-400 font-bold px-2 py-0.5 bg-slate-100 rounded-full ml-1">
+                    <span className="ml-1 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-400">
                       {groupedWishes[catName].length}
                     </span>
                   </div>
@@ -239,7 +347,7 @@ const WishlistTab: React.FC<WishlistTabProps> = ({
                     <button
                       type="button"
                       onClick={(e) => startQuickAdd(catName, e)}
-                      className="p-1 hover:bg-rose-100/30 rounded-lg text-slate-400 hover:text-rose-500 transition-colors"
+                      className="rounded-lg p-1 text-slate-400 transition-colors hover:bg-rose-100/30 hover:text-rose-500"
                       aria-label="Быстро добавить"
                       title="Быстро добавить"
                     >
@@ -247,7 +355,7 @@ const WishlistTab: React.FC<WishlistTabProps> = ({
                     </button>
                     <button
                       type="button"
-                      className="p-1 hover:bg-rose-100/30 rounded-lg text-slate-400 hover:text-rose-500 transition-colors"
+                      className="rounded-lg p-1 text-slate-400 transition-colors hover:bg-rose-100/30 hover:text-rose-500"
                       aria-label={isCollapsed ? 'Развернуть' : 'Свернуть'}
                     >
                       <ChevronDown
@@ -260,16 +368,15 @@ const WishlistTab: React.FC<WishlistTabProps> = ({
 
                 {!isCollapsed && (
                   <div className="space-y-2">
-                    {groupedWishes[catName].map((task) =>
-                      React.createElement(WishRow, {
-                        key: task.id,
-                        task,
-                        colorVal,
-                        onEditTask,
-                        onToggleComplete,
-                        onDeleteTask,
-                      })
-                    )}
+                    <WishlistCategoryList
+                      categoryName={catName}
+                      tasks={groupedWishes[catName]}
+                      colorVal={colorVal}
+                      onReorder={onReorderWishlistItems}
+                      onEditTask={onEditTask}
+                      onToggleComplete={onToggleComplete}
+                      onDeleteTask={onDeleteTask}
+                    />
 
                     {showQuickAdd && (
                       <CategoryQuickAdd
