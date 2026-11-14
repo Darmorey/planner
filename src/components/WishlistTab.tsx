@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Reorder, useDragControls } from 'motion/react';
 import {
   Plus,
@@ -31,6 +31,7 @@ interface WishlistTabProps {
   onToggleComplete: (taskId: string) => void;
   onDeleteTask: (taskId: string) => void;
   onReorderWishlistItems: (categoryName: string, ordered: Task[]) => void;
+  onReorderWishlistCategories: (orderedNames: string[]) => void;
   accentBg: string;
   accentBgHover: string;
 }
@@ -43,6 +44,7 @@ function WishRow({
   onDeleteTask,
   fulfilled = false,
   draggable = false,
+  onDragEnd,
 }: {
   task: Task;
   colorVal: string;
@@ -51,74 +53,73 @@ function WishRow({
   onDeleteTask: (taskId: string) => void;
   fulfilled?: boolean;
   draggable?: boolean;
+  onDragEnd?: () => void;
 }) {
   const controls = useDragControls();
 
-  const rowClass = `relative flex items-center justify-between rounded-2xl border px-3.5 py-2 transition-all group list-none ${
+  const rowClass = `group relative flex w-full list-none items-center gap-1 rounded-2xl border px-2 py-1.5 ${
     fulfilled
-      ? 'cursor-pointer bg-slate-50/50 border-slate-100 text-slate-500'
-      : `cursor-pointer ${getTaskBgClass(task.color || colorVal)} border-black/5 hover:shadow-md`
+      ? 'cursor-pointer border-slate-100 bg-slate-50/50 text-slate-500'
+      : `cursor-pointer border-black/5 shadow-sm ${getTaskBgClass(task.color || colorVal)} hover:shadow-md`
   }`;
 
   const inner = (
     <>
-      <div className="flex min-w-0 flex-1 items-center gap-2">
-        {draggable && (
-          <button
-            type="button"
-            onPointerDown={(e) => controls.start(e)}
-            className="shrink-0 touch-none cursor-grab rounded p-0.5 text-slate-300 transition-colors hover:text-slate-500 active:cursor-grabbing"
-            data-no-tab-swipe
-            aria-label="Перетащить желание"
-          >
-            <GripVertical size={14} strokeWidth={2} />
-          </button>
-        )}
-
+      {draggable && (
         <button
           type="button"
-          onClick={() => onToggleComplete(task.id)}
-          className="shrink-0 text-slate-300 transition-colors hover:text-rose-500"
+          onPointerDown={(e) => controls.start(e)}
+          className="-ml-0.5 shrink-0 touch-none cursor-grab rounded p-0.5 text-slate-300 transition-colors hover:text-slate-500 active:cursor-grabbing"
+          data-no-tab-swipe
+          aria-label="Перетащить желание"
         >
-          {fulfilled ? (
-            <CheckCircle2 size={18} className="text-rose-500" />
-          ) : (
-            <Circle size={18} className="text-rose-200 hover:text-rose-400" />
-          )}
+          <GripVertical size={14} strokeWidth={2} />
         </button>
+      )}
 
-        <div className="min-w-0 flex-1">
-          <span className={`text-sm font-bold text-slate-800 ${fulfilled ? 'font-semibold text-slate-400 line-through' : ''}`}>
-            {task.title}
-          </span>
-          {task.notes && (
-            <p className={`mt-1 truncate text-xs font-medium italic leading-relaxed ${fulfilled ? 'text-slate-400' : 'text-slate-500'}`}>
-              {task.notes}
-            </p>
-          )}
-          {task.link && (
-            <a
-              href={normalizeExternalUrl(task.link)}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={(e) => e.stopPropagation()}
-              className="mt-1 inline-flex max-w-full items-center gap-1 text-[11px] font-semibold text-sky-600 hover:text-sky-700 hover:underline"
-            >
-              <ExternalLink size={11} className="shrink-0" />
-              <span className="truncate">{task.link.replace(/^https?:\/\//i, '')}</span>
-            </a>
-          )}
-        </div>
-      </div>
+      <button
+        type="button"
+        onClick={() => onToggleComplete(task.id)}
+        className="shrink-0 border-0 bg-transparent p-0 text-slate-300 transition-colors hover:text-rose-500"
+      >
+        {fulfilled ? (
+          <CheckCircle2 size={16} className="text-rose-500" />
+        ) : (
+          <Circle size={16} className="text-rose-200 hover:text-rose-400" />
+        )}
+      </button>
 
-      <div className="ml-3 flex shrink-0 gap-1.5">
+      <div className="min-w-0 flex-1 leading-tight">
+        <p className={`truncate text-sm font-bold ${fulfilled ? 'font-semibold text-slate-400 line-through' : 'text-slate-800'}`}>
+          {task.title}
+        </p>
+        {task.notes && (
+          <p className={`mt-0.5 truncate text-xs font-medium italic ${fulfilled ? 'text-slate-400' : 'text-slate-500'}`}>
+            {task.notes}
+          </p>
+        )}
         {task.link && (
           <a
             href={normalizeExternalUrl(task.link)}
             target="_blank"
             rel="noopener noreferrer"
             onClick={(e) => e.stopPropagation()}
-            className="rounded-lg p-1.5 text-sky-500 transition-colors hover:bg-sky-50 hover:text-sky-700"
+            className="mt-0.5 inline-flex max-w-full items-center gap-1 truncate text-[11px] font-semibold text-sky-600 hover:text-sky-700 hover:underline"
+          >
+            <ExternalLink size={11} className="shrink-0" />
+            <span className="truncate">{task.link.replace(/^https?:\/\//i, '')}</span>
+          </a>
+        )}
+      </div>
+
+      <div className="flex shrink-0 items-center gap-0.5">
+        {task.link && (
+          <a
+            href={normalizeExternalUrl(task.link)}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(e) => e.stopPropagation()}
+            className="rounded-lg p-1 text-sky-500 opacity-70 transition-colors hover:bg-sky-50 hover:text-sky-700 group-hover:opacity-100"
             title="Открыть ссылку"
             aria-label="Открыть ссылку"
           >
@@ -128,24 +129,18 @@ function WishRow({
         <button
           type="button"
           onClick={() => onEditTask(task)}
-          className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-rose-50 hover:text-rose-600"
+          className="rounded-lg p-1 text-slate-400 opacity-60 transition-colors hover:bg-rose-50 hover:text-rose-600 group-hover:opacity-100"
         >
           <Edit2 size={13} />
         </button>
         <button
           type="button"
           onClick={() => onDeleteTask(task.id)}
-          className="rounded-lg bg-red-50 p-1.5 text-red-500 transition-colors hover:bg-red-100"
+          className="rounded-lg p-1 text-red-400 opacity-60 transition-colors hover:bg-red-50 hover:text-red-500 group-hover:opacity-100"
         >
           <Trash2 size={13} />
         </button>
       </div>
-
-      {!fulfilled && (
-        <div className="pointer-events-none absolute right-14 top-1.5 opacity-0 transition-opacity group-hover:opacity-10">
-          <Sparkles size={11} className="text-rose-400" />
-        </div>
-      )}
     </>
   );
 
@@ -167,7 +162,9 @@ function WishRow({
           scale: 1.02,
           boxShadow: '0 12px 28px rgba(15, 23, 42, 0.14)',
           zIndex: 20,
+          cursor: 'grabbing',
         }}
+        onDragEnd={() => onDragEnd?.()}
         onClick={onRowClick}
       >
         {inner}
@@ -200,14 +197,28 @@ function WishlistCategoryList({
   onDeleteTask: (taskId: string) => void;
 }) {
   const [orderedTasks, setOrderedTasks] = useState(tasks);
+  const latestOrderRef = useRef(orderedTasks);
 
   useEffect(() => {
-    setOrderedTasks(tasks);
+    setOrderedTasks((prev) => {
+      const prevIds = prev.map((t) => t.id).join('|');
+      const nextIds = tasks.map((t) => t.id).join('|');
+      if (prevIds === nextIds) return prev;
+      return tasks;
+    });
   }, [tasks]);
+
+  useEffect(() => {
+    latestOrderRef.current = orderedTasks;
+  }, [orderedTasks]);
 
   const handleReorder = (next: Task[]) => {
     setOrderedTasks(next);
-    onReorder(categoryName, next);
+    latestOrderRef.current = next;
+  };
+
+  const persistOrder = () => {
+    onReorder(categoryName, latestOrderRef.current);
   };
 
   return (
@@ -226,9 +237,141 @@ function WishlistCategoryList({
           onToggleComplete,
           onDeleteTask,
           draggable: true,
+          onDragEnd: persistOrder,
         })
       )}
     </Reorder.Group>
+  );
+}
+
+function WishlistCategorySection({
+  catName,
+  colorVal,
+  dotBg,
+  textTheme,
+  isCollapsed,
+  showQuickAdd,
+  tasks,
+  onToggleCollapse,
+  onStartQuickAdd,
+  onQuickAdd,
+  onCancelQuickAdd,
+  onReorderWishlistItems,
+  onEditTask,
+  onToggleComplete,
+  onDeleteTask,
+  onCategoryDragEnd,
+}: {
+  catName: string;
+  colorVal: string;
+  dotBg: string;
+  textTheme: string;
+  isCollapsed: boolean;
+  showQuickAdd: boolean;
+  tasks: Task[];
+  onToggleCollapse: (name: string) => void;
+  onStartQuickAdd: (name: string, e: React.MouseEvent) => void;
+  onQuickAdd: (name: string, title: string) => void;
+  onCancelQuickAdd: () => void;
+  onReorderWishlistItems: (categoryName: string, ordered: Task[]) => void;
+  onEditTask: (task: Task) => void;
+  onToggleComplete: (taskId: string) => void;
+  onDeleteTask: (taskId: string) => void;
+  onCategoryDragEnd: () => void;
+}) {
+  const controls = useDragControls();
+
+  return (
+    <Reorder.Item
+      value={catName}
+      dragListener={false}
+      dragControls={controls}
+      layout="position"
+      transition={{ type: 'spring', stiffness: 420, damping: 32 }}
+      className="list-none space-y-2.5"
+      whileDrag={{
+        scale: 1.01,
+        boxShadow: '0 12px 28px rgba(15, 23, 42, 0.1)',
+        zIndex: 15,
+      }}
+      onDragEnd={onCategoryDragEnd}
+    >
+      <div
+        onClick={() => onToggleCollapse(catName)}
+        className="group/cat flex cursor-pointer select-none items-center justify-between border-b border-rose-100/40 pb-1"
+      >
+        <div className="flex min-w-0 items-center gap-1.5">
+          <button
+            type="button"
+            onClick={(e) => e.stopPropagation()}
+            onPointerDown={(e) => {
+              e.stopPropagation();
+              controls.start(e);
+            }}
+            className="shrink-0 touch-none cursor-grab rounded p-0.5 text-slate-300 transition-colors hover:text-slate-500 active:cursor-grabbing"
+            data-no-tab-swipe
+            aria-label="Переместить категорию"
+            title="Переместить категорию"
+          >
+            <GripVertical size={15} strokeWidth={2} />
+          </button>
+          <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${dotBg}`} />
+          <h3 className={`truncate text-base font-extrabold tracking-wide ${textTheme} decoration-2 group-hover/cat:underline`}>
+            {catName}
+          </h3>
+          <span className="ml-0.5 shrink-0 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-400">
+            {tasks.length}
+          </span>
+        </div>
+
+        <div className="flex shrink-0 items-center gap-0.5">
+          <button
+            type="button"
+            onClick={(e) => onStartQuickAdd(catName, e)}
+            className="rounded-lg p-1 text-slate-400 transition-colors hover:bg-rose-100/30 hover:text-rose-500"
+            aria-label="Быстро добавить"
+            title="Быстро добавить"
+          >
+            <Plus size={16} strokeWidth={2.5} />
+          </button>
+          <button
+            type="button"
+            className="rounded-lg p-1 text-slate-400 transition-colors hover:bg-rose-100/30 hover:text-rose-500"
+            aria-label={isCollapsed ? 'Развернуть' : 'Свернуть'}
+          >
+            <ChevronDown
+              size={16}
+              className={`transition-transform duration-200 ${isCollapsed ? '-rotate-90 text-slate-400' : 'text-slate-600'}`}
+            />
+          </button>
+        </div>
+      </div>
+
+      {!isCollapsed && (
+        <div className="space-y-2">
+          <WishlistCategoryList
+            categoryName={catName}
+            tasks={tasks}
+            colorVal={colorVal}
+            onReorder={onReorderWishlistItems}
+            onEditTask={onEditTask}
+            onToggleComplete={onToggleComplete}
+            onDeleteTask={onDeleteTask}
+          />
+
+          {showQuickAdd && (
+            <CategoryQuickAdd
+              placeholder="Новое желание…"
+              onSubmit={(title) => {
+                onQuickAdd(catName, title);
+                onCancelQuickAdd();
+              }}
+              onCancel={onCancelQuickAdd}
+            />
+          )}
+        </div>
+      )}
+    </Reorder.Item>
   );
 }
 
@@ -246,11 +389,27 @@ const WishlistTab: React.FC<WishlistTabProps> = ({
   onToggleComplete,
   onDeleteTask,
   onReorderWishlistItems,
+  onReorderWishlistCategories,
   accentBg,
   accentBgHover,
 }) => {
   const [quickAddCategory, setQuickAddCategory] = useState<string | null>(null);
   const [showFulfilled, setShowFulfilled] = useState(false);
+  const [categoryOrder, setCategoryOrder] = useState(orderedWishlistCategoryNames);
+  const latestCategoryOrderRef = useRef(categoryOrder);
+
+  useEffect(() => {
+    setCategoryOrder((prev) => {
+      const prevJoin = prev.join('|');
+      const nextJoin = orderedWishlistCategoryNames.join('|');
+      if (prevJoin === nextJoin) return prev;
+      return orderedWishlistCategoryNames;
+    });
+  }, [orderedWishlistCategoryNames]);
+
+  useEffect(() => {
+    latestCategoryOrderRef.current = categoryOrder;
+  }, [categoryOrder]);
 
   const startQuickAdd = (catName: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -317,83 +476,42 @@ const WishlistTab: React.FC<WishlistTabProps> = ({
           <p className="text-sm font-medium text-slate-400">Ваш список желаний пока пуст. Загадайте что-нибудь!</p>
         </div>
       ) : (
-        <div className="space-y-6">
-          {orderedWishlistCategoryNames.map((catName) => {
+        <Reorder.Group
+          axis="y"
+          values={categoryOrder}
+          onReorder={(next) => {
+            setCategoryOrder(next);
+            latestCategoryOrderRef.current = next;
+          }}
+          className="flex list-none flex-col gap-6"
+        >
+          {categoryOrder.map((catName) => {
             const catObj = wishlistCategories.find((c: any) => c.name === catName);
             const colorVal = catObj ? catObj.color : 'red';
 
-            const dotBg = getDotBgClass(colorVal);
-            const textTheme = getTextThemeClass(colorVal);
-            const isCollapsed = !!collapsedWishes[catName];
-            const showQuickAdd = quickAddCategory === catName && !isCollapsed;
-
             return (
-              <div key={catName} className="animate-fade-in space-y-2.5">
-                <div
-                  onClick={() => onToggleCollapse(catName)}
-                  className="group/cat flex cursor-pointer select-none items-center justify-between border-b border-rose-100/40 pb-1"
-                >
-                  <div className="flex items-center gap-2">
-                    <span className={`h-2.5 w-2.5 rounded-full ${dotBg}`} />
-                    <h3 className={`text-base font-extrabold tracking-wide ${textTheme} decoration-2 group-hover/cat:underline`}>
-                      {catName}
-                    </h3>
-                    <span className="ml-1 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-400">
-                      {groupedWishes[catName].length}
-                    </span>
-                  </div>
-
-                  <div className="flex items-center gap-0.5">
-                    <button
-                      type="button"
-                      onClick={(e) => startQuickAdd(catName, e)}
-                      className="rounded-lg p-1 text-slate-400 transition-colors hover:bg-rose-100/30 hover:text-rose-500"
-                      aria-label="Быстро добавить"
-                      title="Быстро добавить"
-                    >
-                      <Plus size={16} strokeWidth={2.5} />
-                    </button>
-                    <button
-                      type="button"
-                      className="rounded-lg p-1 text-slate-400 transition-colors hover:bg-rose-100/30 hover:text-rose-500"
-                      aria-label={isCollapsed ? 'Развернуть' : 'Свернуть'}
-                    >
-                      <ChevronDown
-                        size={16}
-                        className={`transition-transform duration-200 ${isCollapsed ? '-rotate-90 text-slate-400' : 'text-slate-600'}`}
-                      />
-                    </button>
-                  </div>
-                </div>
-
-                {!isCollapsed && (
-                  <div className="space-y-2">
-                    <WishlistCategoryList
-                      categoryName={catName}
-                      tasks={groupedWishes[catName]}
-                      colorVal={colorVal}
-                      onReorder={onReorderWishlistItems}
-                      onEditTask={onEditTask}
-                      onToggleComplete={onToggleComplete}
-                      onDeleteTask={onDeleteTask}
-                    />
-
-                    {showQuickAdd && (
-                      <CategoryQuickAdd
-                        placeholder="Новое желание…"
-                        onSubmit={(title) => {
-                          onQuickAdd(catName, title);
-                          setQuickAddCategory(null);
-                        }}
-                        onCancel={() => setQuickAddCategory(null)}
-                      />
-                    )}
-                  </div>
-                )}
-              </div>
+              <WishlistCategorySection
+                key={catName}
+                catName={catName}
+                colorVal={colorVal}
+                dotBg={getDotBgClass(colorVal)}
+                textTheme={getTextThemeClass(colorVal)}
+                isCollapsed={!!collapsedWishes[catName]}
+                showQuickAdd={quickAddCategory === catName && !collapsedWishes[catName]}
+                tasks={groupedWishes[catName]}
+                onToggleCollapse={onToggleCollapse}
+                onStartQuickAdd={startQuickAdd}
+                onQuickAdd={onQuickAdd}
+                onCancelQuickAdd={() => setQuickAddCategory(null)}
+                onReorderWishlistItems={onReorderWishlistItems}
+                onEditTask={onEditTask}
+                onToggleComplete={onToggleComplete}
+                onDeleteTask={onDeleteTask}
+                onCategoryDragEnd={() => onReorderWishlistCategories(latestCategoryOrderRef.current)}
+              />
             );
           })}
-        </div>
+        </Reorder.Group>
       )}
     </div>
   );

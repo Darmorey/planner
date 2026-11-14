@@ -39,9 +39,11 @@ import { noteOrderFromNotes, syncNoteOrder } from './utils/noteHelpers';
 import { FULFILLED_WISHLIST_CATEGORY, isActiveWish, isFulfilledWish } from './utils/wishlistHelpers';
 import { GIVEN_GIFT_RECIPIENT, isActiveGift, isGivenGift } from './utils/giftHelpers';
 import {
+  applyWishlistCategoryDisplayOrder,
   loadGiftRecipients,
   loadWishlistCategories,
   orderSectionNamesByCatalog,
+  saveWishlistCategories,
 } from './utils/catalogHelpers';
 
 import { ThemeId, isThemeId, getDefaultTaskColor } from './utils/themeTypes';
@@ -958,6 +960,12 @@ export default function App() {
     }));
   };
 
+  const handleReorderWishlistCategories = (orderedNames: string[]) => {
+    const current = loadWishlistCategories();
+    saveWishlistCategories(applyWishlistCategoryDisplayOrder(current, orderedNames));
+    setCatalogTick((t) => t + 1);
+  };
+
   // Someday (No Date) tasks list
   const somedayTasks = tasks.filter(task => !task.isWishlist && !task.isGift && !task.date);
 
@@ -1654,6 +1662,7 @@ export default function App() {
               onToggleComplete={handleToggleComplete}
               onDeleteTask={handleDeleteTask}
               onReorderWishlistItems={handleReorderWishlistItems}
+              onReorderWishlistCategories={handleReorderWishlistCategories}
               accentBg={t.accentBg}
               accentBgHover={t.accentBgHover}
             />

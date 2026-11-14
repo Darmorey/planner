@@ -54,6 +54,32 @@ export function saveWishlistCategories(items: CatalogColorItem[]): void {
   localStorage.setItem(WISHLIST_CATEGORIES_STORAGE_KEY, JSON.stringify(items));
 }
 
+/** Move listed categories to the front (in given order), keep the rest after them. */
+export function applyWishlistCategoryDisplayOrder(
+  catalog: CatalogColorItem[],
+  priorityNames: string[]
+): CatalogColorItem[] {
+  const byName = new Map(catalog.map((c) => [c.name, c]));
+  const result: CatalogColorItem[] = [];
+
+  priorityNames.forEach((name) => {
+    const item = byName.get(name);
+    if (item) {
+      result.push(item);
+      byName.delete(name);
+    }
+  });
+
+  catalog.forEach((item) => {
+    if (byName.has(item.name)) {
+      result.push(item);
+      byName.delete(item.name);
+    }
+  });
+
+  return result;
+}
+
 export function saveGiftRecipients(items: CatalogColorItem[]): void {
   localStorage.setItem(GIFT_RECIPIENTS_STORAGE_KEY, JSON.stringify(items));
 }
