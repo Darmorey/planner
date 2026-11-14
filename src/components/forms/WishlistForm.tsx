@@ -12,6 +12,10 @@ import {
 } from './formHelpers';
 import { ThemeId, getDefaultTaskColor } from '../../utils/themeTypes';
 import { FULFILLED_WISHLIST_CATEGORY } from '../../utils/wishlistHelpers';
+import {
+  loadWishlistCategories,
+  saveWishlistCategories,
+} from '../../utils/catalogHelpers';
 
 interface WishlistFormProps {
   isOpen: boolean;
@@ -38,21 +42,7 @@ export default function WishlistForm({
   const [notes, setNotes] = useState('');
   const [image, setImage] = useState<string | undefined>(undefined);
 
-  const [wishlistCategories, setWishlistCategories] = useState<NamedColorItem[]>(() => {
-    const saved = localStorage.getItem('wishlist_categories_custom');
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch (e) {
-        // ignore
-      }
-    }
-    return [
-      { name: 'Одежда', color: 'red' },
-      { name: 'Дом', color: 'green' },
-      { name: 'Хобби', color: 'purple' },
-    ];
-  });
+  const [wishlistCategories, setWishlistCategories] = useState<NamedColorItem[]>(() => loadWishlistCategories());
   const [selectedWishlistCategory, setSelectedWishlistCategory] = useState<string>('Одежда');
   const [newCatName, setNewCatName] = useState('');
   const [newCatColor, setNewCatColor] = useState(themeDefaultColor);
@@ -75,7 +65,7 @@ export default function WishlistForm({
     }
     const updated = [...wishlistCategories, { name: trimmed, color: newCatColor }];
     setWishlistCategories(updated);
-    localStorage.setItem('wishlist_categories_custom', JSON.stringify(updated));
+    saveWishlistCategories(updated);
     setSelectedWishlistCategory(trimmed);
     setNewCatName('');
     setIsAddingWishlistCat(false);
@@ -85,7 +75,7 @@ export default function WishlistForm({
     e.stopPropagation();
     const updated = wishlistCategories.filter(c => c.name !== catNameToDelete);
     setWishlistCategories(updated);
-    localStorage.setItem('wishlist_categories_custom', JSON.stringify(updated));
+    saveWishlistCategories(updated);
     if (selectedWishlistCategory === catNameToDelete) {
       if (updated.length > 0) {
         setSelectedWishlistCategory(updated[0].name);
@@ -106,12 +96,18 @@ export default function WishlistForm({
     }
     const updated = wishlistCategories.map(c => c.name === oldName ? { ...c, name: trimmed } : c);
     setWishlistCategories(updated);
-    localStorage.setItem('wishlist_categories_custom', JSON.stringify(updated));
+    saveWishlistCategories(updated);
     if (selectedWishlistCategory === oldName) {
       setSelectedWishlistCategory(trimmed);
     }
     setEditingWishlistCat(null);
   };
+
+  useEffect(() => {
+    if (isOpen) {
+      setWishlistCategories(loadWishlistCategories());
+    }
+  }, [isOpen]);
 
   useEffect(() => {
     if (initialTask) {

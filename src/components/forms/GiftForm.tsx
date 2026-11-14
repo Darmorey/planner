@@ -10,6 +10,8 @@ import {
   handleImageUpload,
 } from './formHelpers';
 import { ThemeId, getDefaultTaskColor } from '../../utils/themeTypes';
+import { GIVEN_GIFT_RECIPIENT } from '../../utils/giftHelpers';
+import { loadGiftRecipients, saveGiftRecipients } from '../../utils/catalogHelpers';
 
 interface GiftFormProps {
   isOpen: boolean;
@@ -35,22 +37,7 @@ export default function GiftForm({
   const [notes, setNotes] = useState('');
   const [image, setImage] = useState<string | undefined>(undefined);
 
-  const [giftRecipients, setGiftRecipients] = useState<NamedColorItem[]>(() => {
-    const saved = localStorage.getItem('gift_recipients_custom');
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch (e) {
-        // ignore
-      }
-    }
-    return [
-      { name: 'Папа', color: 'green' },
-      { name: 'Мама', color: 'red' },
-      { name: 'Лёша', color: 'purple' },
-      { name: 'Бабушка', color: 'green' },
-    ];
-  });
+  const [giftRecipients, setGiftRecipients] = useState<NamedColorItem[]>(() => loadGiftRecipients(theme));
   const [selectedGiftRecipient, setSelectedGiftRecipient] = useState<string>('Папа');
   const [newRecipientName, setNewRecipientName] = useState('');
   const [newRecipientColor, setNewRecipientColor] = useState(themeDefaultColor);
@@ -63,6 +50,7 @@ export default function GiftForm({
   const handleAddNewRecipient = () => {
     const trimmed = newRecipientName.trim();
     if (!trimmed) return;
+    if (trimmed === GIVEN_GIFT_RECIPIENT) return;
     if (giftRecipients.some(r => r.name.toLowerCase() === trimmed.toLowerCase())) {
       const match = giftRecipients.find(r => r.name.toLowerCase() === trimmed.toLowerCase())!;
       setSelectedGiftRecipient(match.name);
@@ -72,7 +60,7 @@ export default function GiftForm({
     }
     const updated = [...giftRecipients, { name: trimmed, color: newRecipientColor }];
     setGiftRecipients(updated);
-    localStorage.setItem('gift_recipients_custom', JSON.stringify(updated));
+    saveGiftRecipients(updated);
     setSelectedGiftRecipient(trimmed);
     setNewRecipientName('');
     setIsAddingGiftRecipient(false);
@@ -82,7 +70,7 @@ export default function GiftForm({
     e.stopPropagation();
     const updated = giftRecipients.filter(r => r.name !== recNameToDelete);
     setGiftRecipients(updated);
-    localStorage.setItem('gift_recipients_custom', JSON.stringify(updated));
+    saveGiftRecipients(updated);
     if (selectedGiftRecipient === recNameToDelete) {
       if (updated.length > 0) {
         setSelectedGiftRecipient(updated[0].name);
@@ -103,12 +91,18 @@ export default function GiftForm({
     }
     const updated = giftRecipients.map(r => r.name === oldName ? { ...r, name: trimmed } : r);
     setGiftRecipients(updated);
-    localStorage.setItem('gift_recipients_custom', JSON.stringify(updated));
+    saveGiftRecipients(updated);
     if (selectedGiftRecipient === oldName) {
       setSelectedGiftRecipient(trimmed);
     }
     setEditingGiftRecipient(null);
   };
+
+  useEffect(() => {
+    if (isOpen) {
+      setGiftRecipients(loadGiftRecipients(theme));
+    }
+  }, [isOpen, theme]);
 
   useEffect(() => {
     if (initialTask) {
@@ -213,7 +207,7 @@ export default function GiftForm({
                         {giftRecipients.length === 0 ? (
                           <div className="p-3 text-xs text-slate-400 text-center font-medium">Нет доступных получателей</div>
                         ) : (
-                          giftRecipients.map(rec => {
+                          giftRecipients.filter(rec => rec.name !== GIVEN_GIFT_RECIPIENT).map(rec => {
                             const itemStyles = getStyleByColor(rec.color);
                             const isSelected = rec.name === selectedGiftRecipient;
                             const isEditing = editingGiftRecipient === rec.name;

@@ -24,6 +24,8 @@ export interface Task {
   /** Original category before marking wish as fulfilled */
   wishlistCategoryBeforeFulfilled?: string;
   giftRecipient?: string; // Custom recipient/person for gifts (e.g., Папа, Мама, Лёша, Бабушка)
+  /** Original recipient before marking gift as given */
+  giftRecipientBeforeGiven?: string;
   somedayCategory?: string; // Custom category for someday tasks (e.g., Идеи, Планы, Покупки, Разное)
   notes?: string;
   link?: string; // Optional URL (primarily for wishlist items)

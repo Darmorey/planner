@@ -1,6 +1,16 @@
-import React, { useRef } from 'react';
-import { X, Palette, Trash2, Download, Upload } from 'lucide-react';
+import React, { useRef, useState, useEffect } from 'react';
+import { X, Palette, Trash2, Download, Upload, ListOrdered } from 'lucide-react';
 import { ThemeId } from '../utils/themeTypes';
+import CategoryOrderList from './CategoryOrderList';
+import {
+  CatalogColorItem,
+  loadWishlistCategories,
+  loadGiftRecipients,
+  saveWishlistCategories,
+  saveGiftRecipients,
+} from '../utils/catalogHelpers';
+import { FULFILLED_WISHLIST_CATEGORY } from '../utils/wishlistHelpers';
+import { GIVEN_GIFT_RECIPIENT } from '../utils/giftHelpers';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -11,6 +21,7 @@ interface SettingsModalProps {
   onThemeChange: (newTheme: ThemeId) => void;
   onExportBackup: () => void;
   onImportBackup: (file: File) => void;
+  onCatalogOrderChange?: () => void;
 }
 
 const themesList = [
@@ -29,8 +40,19 @@ export default function SettingsModal({
   onThemeChange,
   onExportBackup,
   onImportBackup,
+  onCatalogOrderChange,
 }: SettingsModalProps) {
   const importInputRef = useRef<HTMLInputElement>(null);
+  const [wishlistOrder, setWishlistOrder] = useState<CatalogColorItem[]>([]);
+  const [giftOrder, setGiftOrder] = useState<CatalogColorItem[]>([]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    setWishlistOrder(
+      loadWishlistCategories().filter((c) => c.name !== FULFILLED_WISHLIST_CATEGORY)
+    );
+    setGiftOrder(loadGiftRecipients(theme).filter((r) => r.name !== GIVEN_GIFT_RECIPIENT));
+  }, [isOpen, theme]);
 
   if (!isOpen) return null;
 
@@ -38,6 +60,18 @@ export default function SettingsModal({
     const file = e.target.files?.[0];
     if (file) onImportBackup(file);
     e.target.value = '';
+  };
+
+  const handleWishlistReorder = (next: CatalogColorItem[]) => {
+    setWishlistOrder(next);
+    saveWishlistCategories(next);
+    onCatalogOrderChange?.();
+  };
+
+  const handleGiftReorder = (next: CatalogColorItem[]) => {
+    setGiftOrder(next);
+    saveGiftRecipients(next);
+    onCatalogOrderChange?.();
   };
 
   return (
@@ -54,7 +88,7 @@ export default function SettingsModal({
           <Palette className="text-slate-600" size={24} />
           <div>
             <h3 className="text-lg font-semibold text-slate-800">Настройки ежедневника</h3>
-            <p className="text-xs text-slate-400 font-medium">Тема, резервная копия и сброс данных</p>
+            <p className="text-xs text-slate-400 font-medium">Тема, порядок списков, резервная копия</p>
           </div>
         </div>
 
@@ -84,6 +118,32 @@ export default function SettingsModal({
               </button>
             ))}
           </div>
+        </div>
+
+        <div className="mb-5 pb-5 border-b border-slate-100/80">
+          <div className="flex items-center gap-2 mb-2">
+            <ListOrdered className="text-slate-500" size={17} />
+            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest leading-none">
+              Порядок на страницах
+            </span>
+          </div>
+          <p className="text-[11px] text-slate-500 mb-3 leading-normal">
+            Перетащите категории и получателей — так они будут идти во вкладках «Желания» и «Подарки».
+          </p>
+
+          <p className="text-[10px] font-bold text-rose-500/90 uppercase tracking-widest mb-1.5">Желания</p>
+          <CategoryOrderList
+            items={wishlistOrder}
+            onReorder={handleWishlistReorder}
+            emptyLabel="Нет категорий. Добавьте их при создании желания."
+          />
+
+          <p className="text-[10px] font-bold text-pink-500/90 uppercase tracking-widest mb-1.5 mt-4">Подарки</p>
+          <CategoryOrderList
+            items={giftOrder}
+            onReorder={handleGiftReorder}
+            emptyLabel="Нет получателей. Добавьте их при создании подарка."
+          />
         </div>
 
         <div className="mb-5 pb-5 border-b border-slate-100/80">

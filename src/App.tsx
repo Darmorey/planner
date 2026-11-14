@@ -37,6 +37,12 @@ import {
 } from './utils/backupHelpers';
 import { noteOrderFromNotes, syncNoteOrder } from './utils/noteHelpers';
 import { FULFILLED_WISHLIST_CATEGORY, isActiveWish, isFulfilledWish } from './utils/wishlistHelpers';
+import { GIVEN_GIFT_RECIPIENT, isActiveGift, isGivenGift } from './utils/giftHelpers';
+import {
+  loadGiftRecipients,
+  loadWishlistCategories,
+  orderSectionNamesByCatalog,
+} from './utils/catalogHelpers';
 
 import { ThemeId, isThemeId, getDefaultTaskColor } from './utils/themeTypes';
 
@@ -265,6 +271,7 @@ export default function App() {
   const [isTaskFormOpen, setIsTaskFormOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [catalogTick, setCatalogTick] = useState(0);
   // Collapsed sections for Wishlist & Gifts & Someday
   const [collapsedWishes, setCollapsedWishes] = useState<Record<string, boolean>>({});
   const [collapsedGifts, setCollapsedGifts] = useState<Record<string, boolean>>({});
@@ -473,7 +480,16 @@ export default function App() {
     setTasks(prev => {
       let changed = false;
       const updated = prev.map(t => {
-        if (!t.isWishlist && !t.isGift && t.date && !t.time && !t.completed && t.date < todayStr && (!t.recurrence || t.recurrence.pattern === 'none')) {
+        if (
+          !t.isWishlist &&
+          !t.isGift &&
+          t.category !== 'event' &&
+          t.date &&
+          !t.time &&
+          !t.completed &&
+          t.date < todayStr &&
+          (!t.recurrence || t.recurrence.pattern === 'none')
+        ) {
           changed = true;
           return { ...t, date: todayStr };
         }
@@ -646,6 +662,28 @@ export default function App() {
             completed: false,
             wishlistCategory: restoreCat,
             wishlistCategoryBeforeFulfilled: undefined,
+          };
+        } else if (t.isGift) {
+          const markingDone = !t.completed;
+          if (markingDone) {
+            const prevRecipient = t.giftRecipient === GIVEN_GIFT_RECIPIENT
+              ? (t.giftRecipientBeforeGiven || 'Папа')
+              : (t.giftRecipient || 'Папа');
+            return {
+              ...t,
+              completed: true,
+              giftRecipientBeforeGiven: prevRecipient,
+              giftRecipient: GIVEN_GIFT_RECIPIENT,
+            };
+          }
+          const restoreRecipient = t.giftRecipientBeforeGiven
+            || (t.giftRecipient !== GIVEN_GIFT_RECIPIENT ? t.giftRecipient : undefined)
+            || 'Папа';
+          return {
+            ...t,
+            completed: false,
+            giftRecipient: restoreRecipient,
+            giftRecipientBeforeGiven: undefined,
           };
         } else {
           return { ...t, completed: !t.completed };
@@ -940,20 +978,10 @@ export default function App() {
   const activeWishlistTasks = wishlistTasks.filter(isActiveWish);
   const fulfilledWishlistTasks = wishlistTasks.filter(isFulfilledWish);
 
-  // Predefined/custom wishlist categories and their colors
-  const wishlistCategories = (() => {
-    const saved = localStorage.getItem('wishlist_categories_custom');
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch (e) {}
-    }
-    return [
-      { name: 'Одежда', color: 'red' },
-      { name: 'Дом', color: 'green' },
-      { name: 'Хобби', color: 'purple' },
-    ];
-  })();
+  void catalogTick;
+
+  // Predefined/custom wishlist categories and their colors (order = display order)
+  const wishlistCategories = loadWishlistCategories();
 
   // Group active wishlist tasks by category
   const groupedWishes: { [key: string]: Task[] } = {};
@@ -966,48 +994,35 @@ export default function App() {
     groupedWishes[cat].push(task);
   });
 
-  // Unique categories list containing tasks or preselected
-  const orderedWishlistCategoryNames = [
-    ...wishlistCategories.map((c: any) => c.name),
-    ...Object.keys(groupedWishes).filter(name => !wishlistCategories.some((c: any) => c.name === name))
-  ]
-    .filter(name => name !== FULFILLED_WISHLIST_CATEGORY)
-    .filter(name => groupedWishes[name] && groupedWishes[name].length > 0);
+  const orderedWishlistCategoryNames = orderSectionNamesByCatalog(
+    wishlistCategories,
+    Object.keys(groupedWishes),
+    [FULFILLED_WISHLIST_CATEGORY]
+  );
 
   // Gifts list
-  const giftsTasks = tasks.filter(task => !!task.isGift);
+  const allGiftTasks = tasks.filter(task => !!task.isGift);
+  const activeGiftTasks = allGiftTasks.filter(isActiveGift);
+  const givenGiftTasks = allGiftTasks.filter(isGivenGift);
 
-  // Predefined/custom gift recipients and their colors
-  const giftRecipients = (() => {
-    const saved = localStorage.getItem('gift_recipients_custom');
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch (e) {}
-    }
-    return [
-      { name: 'Папа', color: getDefaultTaskColor(theme) },
-      { name: 'Мама', color: 'red' },
-      { name: 'Лёша', color: 'purple' },
-      { name: 'Бабушка', color: 'green' },
-    ];
-  })();
+  const giftRecipients = loadGiftRecipients(theme);
 
-  // Group gift tasks by recipient
+  // Group active gift tasks by recipient
   const groupedGifts: { [key: string]: Task[] } = {};
-  giftsTasks.forEach(task => {
+  activeGiftTasks.forEach(task => {
     const recipient = task.giftRecipient || 'Папа';
+    if (recipient === GIVEN_GIFT_RECIPIENT) return;
     if (!groupedGifts[recipient]) {
       groupedGifts[recipient] = [];
     }
     groupedGifts[recipient].push(task);
   });
 
-  // Unique recipient names list containing gifts or preselected
-  const orderedGiftRecipientNames = [
-    ...giftRecipients.map((r: any) => r.name),
-    ...Object.keys(groupedGifts).filter(name => !giftRecipients.some((r: any) => r.name === name))
-  ].filter(name => groupedGifts[name] && groupedGifts[name].length > 0);
+  const orderedGiftRecipientNames = orderSectionNamesByCatalog(
+    giftRecipients,
+    Object.keys(groupedGifts),
+    [GIVEN_GIFT_RECIPIENT]
+  );
 
   // Free hours calculation based on all scheduled, active tasks for the day
   const freeTime = calculateFreeTime(allScheduledTasksOpenAndClosed, selectedDate);
@@ -1619,7 +1634,8 @@ export default function App() {
           {/* GIFTS TAB */}
           {currentTab === 'gifts' && (
             <GiftsTab
-              giftsTasks={giftsTasks}
+              giftsTasks={activeGiftTasks}
+              givenGiftTasks={givenGiftTasks}
               giftRecipients={giftRecipients}
               groupedGifts={groupedGifts}
               orderedGiftRecipientNames={orderedGiftRecipientNames}
@@ -1734,6 +1750,7 @@ export default function App() {
         }}
         onExportBackup={handleExportBackup}
         onImportBackup={handleImportBackup}
+        onCatalogOrderChange={() => setCatalogTick((t) => t + 1)}
       />
 
       {/* NOTES SYSTEM MODALS */}
